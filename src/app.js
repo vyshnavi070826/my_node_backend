@@ -7,6 +7,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Root route (ADD THIS)
+app.get("/", (req, res) => {
+  res.send("Backend is running successfully 🚀");
+});
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
