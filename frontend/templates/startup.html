@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startups & Ideas | Next Step</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-900 hero-gradient">
+    <main class="max-w-7xl mx-auto py-32 px-6 animate-in min-h-screen">
+        <a id="back-btn" href="hub.html" class="mb-12 inline-flex items-center text-slate-400 font-black hover:text-blue-600 transition-colors uppercase tracking-[0.3em] text-[10px] group">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Back to hub
+        </a>
+
+        <section class="mb-32 opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;">
+            <h2 class="text-6xl font-black text-slate-900 mb-20 tracking-tighter border-l-8 border-blue-600 pl-12 text-balance text-gradient">Industrial Ecosystem.</h2>
+            <div id="ecosystem-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                </div>
+        </section>
+
+        <section class="opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;">
+            <h2 class="text-6xl font-black text-slate-900 mb-20 tracking-tighter border-l-8 border-purple-600 pl-12 text-balance text-gradient">Idea Bank.</h2>
+            <div id="ideas-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                </div>
+        </section>
+    </main>
+
+    <script src="../script/data.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const deptId = urlParams.get('dept') || 'biotech';
+        const startupData = DATA[deptId].startups;
+
+        document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
+
+        // Populate Ecosystem
+        const ecoGrid = document.getElementById('ecosystem-grid');
+        if (startupData.ecosystem && startupData.ecosystem.length > 0) {
+            startupData.ecosystem.forEach((company, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-12 rounded-[3.5rem] border border-slate-100 flex flex-col hover:shadow-2xl category-card h-full opacity-0";
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.4 + index * 0.1}s forwards`;
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-3xl font-black text-slate-900">${company.name}</h3>
+                        <a href="${company.url}" target="_blank" class="p-3 bg-slate-50 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                            <i data-lucide="external-link" class="w-6 h-6"></i>
+                        </a>
+                    </div>
+                    <p class="text-slate-500 font-medium leading-relaxed mb-10 flex-grow">${company.desc}</p>
+                    <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Primary Offering</span>
+                        <p class="text-slate-800 font-bold leading-tight">${company.focus}</p>
+                    </div>
+                `;
+                ecoGrid.appendChild(div);
+            });
+        }
+
+        // Populate Ideas
+        const ideasGrid = document.getElementById('ideas-grid');
+        if (startupData.ideas && startupData.ideas.length > 0) {
+            startupData.ideas.forEach((idea, index) => {
+                const div = document.createElement('div');
+                div.className = "flex items-start gap-8 p-10 bg-white border border-slate-100 rounded-[3rem] text-slate-900 font-black text-xl hover:shadow-xl category-card opacity-0";
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.5 + index * 0.1}s forwards`;
+                div.innerHTML = `
+                    <i data-lucide="lightbulb" class="w-8 h-8 mt-1 shrink-0 text-purple-400 icon-bounce"></i>
+                    <span>${idea}</span>
+                `;
+                ideasGrid.appendChild(div);
+            });
+        }
+
+        initializePage();
+        if(window.lucide) window.lucide.createIcons();
+    </script>
+</body>
+</html>

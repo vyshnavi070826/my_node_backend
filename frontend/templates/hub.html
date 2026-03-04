@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub | Next Step</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-900 hero-gradient">
+    <main class="max-w-7xl mx-auto py-32 px-6 animate-in min-h-screen">
+        <a href="departments.html" class="mb-12 inline-flex items-center text-slate-400 font-black hover:text-blue-600 transition-colors uppercase tracking-[0.3em] text-[10px] group">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Change Department
+        </a>
+        
+        <div class="flex flex-col md:flex-row items-center gap-10 mb-16 bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden card-hover" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; opacity: 0;">
+            <div id="hub-icon" class="text-blue-600 icon-float"></div>
+            <div class="text-center md:text-left">
+                <h2 id="hub-title" class="text-5xl font-black text-slate-900 tracking-tighter mb-2 text-gradient"></h2>
+                <p class="text-blue-600 font-black uppercase tracking-[0.3em] text-xs">Diagnostic active</p>
+            </div>
+        </div>
+
+        <div class="bg-white/50 backdrop-blur-md p-2 rounded-[2.5rem] shadow-xl border border-white mb-8 card-hover" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; opacity: 0;">
+            <div id="hub-links" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                </div>
+        </div>
+    </main>
+
+    <script src="../script/data.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const deptId = urlParams.get('dept') || 'biotech'; // Fallback
+        const deptInfo = DEPARTMENTS.find(d => d.id === deptId);
+
+        document.getElementById('hub-title').innerText = `${deptInfo.name} Hub`;
+        document.getElementById('hub-icon').innerHTML = `<i data-lucide="${deptInfo.icon}" style="width: 110px; height: 110px;"></i>`;
+
+        const linksData = [
+            { url: `programs.html?dept=${deptId}&type=mtech`, title: 'PG Programs', icon: 'graduation-cap' },
+            { url: `programs.html?dept=${deptId}&type=phd`, title: 'Ph.D Programs', icon: 'book-open' },
+            { url: `exams.html?dept=${deptId}`, title: 'Exams', icon: 'file-text' },
+            { url: `jobs.html?dept=${deptId}`, title: 'Jobs', icon: 'briefcase' },
+            { url: `startup.html?dept=${deptId}`, title: 'Startups', icon: 'rocket' },
+            { url: `startup-guide.html?dept=${deptId}`, title: 'Startup Guide', icon: 'library' }
+        ];
+
+        const linkContainer = document.getElementById('hub-links');
+        linksData.forEach((item, index) => {
+            const a = document.createElement('a');
+            a.href = item.url;
+            a.className = "flex flex-col md:flex-row items-center gap-3 px-6 py-8 md:py-10 bg-white border border-slate-100 rounded-3xl hover:bg-blue-600 hover:text-white transition-all group category-card text-center md:text-left opacity-0";
+            a.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.4 + index * 0.1}s forwards`;
+            a.innerHTML = `
+                <i data-lucide="${item.icon}" class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors"></i>
+                <span class="font-bold text-sm tracking-tight">${item.title}</span>
+            `;
+            linkContainer.appendChild(a);
+        });
+
+        initializePage();
+    </script>
+</body>
+</html>

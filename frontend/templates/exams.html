@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exams | Next Step</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-900 hero-gradient">
+    <main class="max-w-7xl mx-auto py-32 px-6 animate-in min-h-screen">
+        <a id="back-btn" href="hub.html" class="mb-12 inline-flex items-center text-slate-400 font-black hover:text-blue-600 transition-colors uppercase tracking-widest text-[10px] group">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Back to hub
+        </a>
+        
+        <h2 class="text-5xl font-black text-slate-900 mb-16 tracking-tighter text-gradient opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;">Competitive Exams</h2>
+        
+        <div id="exams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+    </main>
+
+    <script src="../script/data.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const deptId = urlParams.get('dept') || 'biotech';
+        const examData = DATA[deptId].exams;
+
+        document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
+        const grid = document.getElementById('exams-grid');
+
+        if (examData && examData.length > 0) {
+            examData.forEach((exam, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col hover:shadow-2xl category-card opacity-0";
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.2 + index * 0.1}s forwards`;
+                div.innerHTML = `
+                    <div class="bg-blue-50 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center mb-6 icon-bounce">
+                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-3 text-slate-900">${exam.name}</h3>
+                    <div class="space-y-4 mb-6 flex-grow">
+                        <div>
+                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Purpose:</p>
+                            <p class="text-slate-600 text-sm leading-relaxed">${exam.purpose}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Eligibility:</p>
+                            <p class="text-slate-600 text-sm leading-relaxed">${exam.eligibility}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Syllabus Overview:</p>
+                            <p class="text-slate-600 text-sm leading-relaxed italic">${exam.syllabus || "Refer to official portal"}</p>
+                        </div>
+                    </div>
+                    <div class="mt-auto pt-6 border-t border-slate-50">
+                        <div class="flex items-center gap-2 mb-6 text-xs font-black uppercase text-blue-600">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 icon-bounce"></i> Month: ${exam.date || "Check Website"}
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <a href="${exam.url}" target="_blank" class="block w-full text-center py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-md btn-primary">Official Portal ↗</a>
+                            <a href="${exam.syllabusUrl || exam.url}" target="_blank" class="block w-full text-center py-4 bg-blue-50 text-blue-600 border border-blue-100 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-100 transition-all">Syllabus Portal ↗</a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+        } else {
+            grid.innerHTML = `<p class="text-slate-400 italic py-20 text-center col-span-full">Exam info arriving soon.</p>`;
+        }
+
+        initializePage();
+        if(window.lucide) window.lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Higher Studies | Next Step</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-900 hero-gradient">
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 bg-transparent py-6">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 group text-left brand-logo">
+                <div class="brand-icon-wrapper">
+                    <div class="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-200 brand-icon">
+                        <i data-lucide="graduation-cap"></i>
+                    </div>
+                </div>
+                <div class="flex flex-col leading-tight">
+                    <span class="brand-text">NxtStepGo</span>
+                </div>
+            </a>
+            <a href="index.html" class="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 transition-all hover:bg-slate-800 shadow-md">
+                <i data-lucide="home" class="w-4 h-4"></i> Home
+            </a>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-32 px-6 animate-in min-h-screen">
+        <a id="back-btn" href="hub.html" class="mb-12 inline-flex items-center text-slate-400 font-black hover:text-blue-600 transition-colors uppercase tracking-widest text-[10px] group">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Back to hub
+        </a>
+        
+        <h2 id="page-title" class="text-5xl font-black text-slate-900 tracking-tighter mb-4 text-gradient opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;"></h2>
+        <p id="page-subtitle" class="text-slate-500 text-lg mb-12 opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;"></p>
+        
+        <div id="programs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            </div>
+    </main>
+
+    <script src="../script/data.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const deptId = urlParams.get('dept') || 'biotech';
+        const progType = urlParams.get('type') || 'mtech'; // 'mtech' or 'phd'
+        
+        const deptInfo = DEPARTMENTS.find(d => d.id === deptId);
+        const deptData = DATA[deptId];
+        const programList = progType === 'phd' ? deptData.higherStudies.phd : deptData.higherStudies.mtech;
+
+        document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
+        document.getElementById('page-title').innerText = progType === 'phd' ? 'Ph.D Programs' : 'PG Programs';
+        document.getElementById('page-subtitle').innerText = `Detailed roadmap and official specialisations for ${deptInfo.name}.`;
+
+        const grid = document.getElementById('programs-grid');
+        
+        if (programList && programList.length > 0) {
+            programList.forEach((inst, index) => {
+                let specsHTML = '';
+                if (inst.specializations && inst.specializations.length > 0) {
+                    const specsBadges = inst.specializations.map(spec => 
+                        `<span class="bg-slate-50 text-slate-600 px-3 py-1.5 rounded-full text-[10px] font-bold border border-slate-100">${spec}</span>`
+                    ).join('');
+                    specsHTML = `
+                        <div>
+                            <p class="text-sm font-bold text-slate-800 mb-2">Top Specialisations:</p>
+                            <div class="flex flex-wrap gap-2">${specsBadges}</div>
+                        </div>
+                    `;
+                }
+
+                const div = document.createElement('div');
+                div.className = "bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-2xl category-card p-8 md:p-10 opacity-0";
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.4 + index * 0.1}s forwards`;
+                div.innerHTML = `
+                    <div class="mb-6">
+                        <h3 class="text-3xl font-bold text-slate-900 mb-2">${inst.name}</h3>
+                        <div class="flex items-center gap-3">
+                            <span class="bg-slate-900 text-white text-[10px] font-bold px-3 py-1 rounded-md">${inst.degree}</span>
+                            <span class="text-slate-400 font-medium text-sm">${inst.location || "Multiple Campuses"}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-6 flex-grow">
+                        <div>
+                            <p class="text-sm font-bold text-slate-800 mb-1">Program:</p>
+                            <p class="text-slate-600 text-sm leading-relaxed">${inst.program}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800 mb-2">Qualifying Exam:</p>
+                            <span class="inline-flex bg-slate-50 border border-slate-100 text-slate-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">${inst.entrance || inst.exam || "Direct Entry"}</span>
+                        </div>
+                        ${specsHTML}
+                    </div>
+                    <div class="mt-10 pt-6 border-t border-slate-50">
+                        <a href="${inst.url}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors group">
+                            Visit Website <i data-lucide="external-link" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform"></i>
+                        </a>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+        } else {
+            grid.innerHTML = `<p class="text-slate-400 italic py-20 text-center col-span-full">No programs listed for this category yet.</p>`;
+        }
+
+        initializePage();
+        if(window.lucide) window.lucide.createIcons();
+    </script>
+</body>
+</html>

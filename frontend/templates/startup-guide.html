@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startup Guide | Next Step</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-900 hero-gradient">
+    <main class="max-w-7xl mx-auto py-32 px-6 animate-in min-h-screen">
+        <a id="back-btn" href="hub.html" class="mb-12 inline-flex items-center text-slate-400 font-black hover:text-blue-600 transition-colors uppercase tracking-widest text-[10px] group">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Back to hub
+        </a>
+
+        <h2 class="text-6xl font-black text-slate-900 mb-20 tracking-tighter text-gradient opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;">Founder's Guide</h2>
+        
+        <div id="guide-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            </div>
+    </main>
+
+    <script src="../script/data.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const deptId = urlParams.get('dept') || 'biotech';
+        const guideData = DATA[deptId].startups.guide;
+
+        document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
+        const grid = document.getElementById('guide-grid');
+
+        if (guideData && guideData.length > 0) {
+            guideData.forEach((step, i) => {
+                let stepsHTML = '';
+                if(step.steps) {
+                    stepsHTML = `
+                        <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="zap" class="w-3.5 h-3.5 text-blue-600 icon-bounce"></i>
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Process Steps</span>
+                            </div>
+                            <p class="text-xs font-bold text-slate-800 leading-relaxed">${step.steps}</p>
+                        </div>
+                    `;
+                }
+
+                let reqHTML = '';
+                if(step.req) {
+                    reqHTML = `
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Eligibility</span>
+                            </div>
+                            <p class="text-xs text-slate-600 font-medium leading-relaxed">${step.req}</p>
+                        </div>
+                    `;
+                }
+
+                const div = document.createElement('div');
+                div.className = "bg-white p-12 rounded-[3.5rem] border border-slate-100 relative group overflow-hidden flex flex-col h-full hover:shadow-2xl category-card opacity-0";
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.3 + i * 0.1}s forwards`;
+                div.innerHTML = `
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] flex items-center justify-center font-black text-4xl text-slate-100">0${i+1}</div>
+                    
+                    <div class="mb-8">
+                        <span class="inline-block bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-blue-100">
+                            ${step.tag}
+                        </span>
+                        <h3 class="text-3xl font-black mb-4 text-slate-900 leading-tight">${step.title}</h3>
+                        <p class="text-slate-500 font-medium leading-relaxed">${step.content}</p>
+                    </div>
+
+                    <div class="space-y-6 flex-grow">
+                        ${stepsHTML}
+                        ${reqHTML}
+                    </div>
+
+                    <div class="mt-12 pt-8 border-t border-slate-50 space-y-4">
+                        <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                            <span class="text-slate-400">Contact Point</span>
+                            <span class="text-blue-600">${step.contact}</span>
+                        </div>
+                        <a href="${step.url}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 btn-primary">
+                            Official Portal <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+        } else {
+            grid.innerHTML = `<p class="text-slate-400 italic col-span-full text-center py-20">Guide content arriving soon.</p>`;
+        }
+
+        initializePage();
+        if(window.lucide) window.lucide.createIcons();
+    </script>
+</body>
+</html>
