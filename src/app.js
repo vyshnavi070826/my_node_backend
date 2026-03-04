@@ -3,13 +3,15 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 
-
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Root route (ADD THIS)
+// SERVE FRONTEND FILES
+app.use(express.static(path.join(__dirname, "../frontend")));
+
+// Root route
 app.get("/", (req, res) => {
   res.send("Backend is running successfully 🚀");
 });
