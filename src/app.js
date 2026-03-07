@@ -11,8 +11,12 @@ app.use(express.json());
 // Serve all frontend files
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// Homepage
+// Homepage & index.html routes
 app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/templates/index.html"));
+});
+
+app.get("/index.html", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/templates/index.html"));
 });
 
