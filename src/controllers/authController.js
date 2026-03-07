@@ -1,20 +1,25 @@
+const User = require("../models/User");
+
 exports.signup = async (req, res) => {
   try {
 
     const { name, email, password } = req.body;
 
-    // Check if password length is valid
-    if(password.length < 6){
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "All fields are required"
+      });
+    }
+
+    if (password.length < 6) {
       return res.status(400).json({
         message: "Password must be at least 6 characters"
       });
     }
 
-    const User = require("../models/User");
-
     const existingUser = await User.findOne({ email });
 
-    if(existingUser){
+    if (existingUser) {
       return res.status(400).json({
         message: "User already exists"
       });
@@ -32,7 +37,41 @@ exports.signup = async (req, res) => {
       message: "Signup successful"
     });
 
-  } catch(err){
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+
+exports.login = async (req, res) => {
+  try {
+
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found"
+      });
+    }
+
+    if (user.password !== password) {
+      return res.status(400).json({
+        message: "Invalid password"
+      });
+    }
+
+    res.json({
+      message: "Login successful",
+      user
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
