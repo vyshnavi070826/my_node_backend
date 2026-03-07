@@ -8,26 +8,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend files
-app.use(express.static(path.join(__dirname, "../frontend")));
+// Serve frontend pages
+app.use(express.static(path.join(__dirname, "../frontend/templates")));
 
-// Root route → open homepage
+// Homepage
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/templates/index.html"));
 });
 
-// MongoDB Connection
+// MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("✅ MongoDB Connected");
-    console.log("Host:", mongoose.connection.host);
-    console.log("Database:", mongoose.connection.name);
-  })
-  .catch((err) => {
-    console.error("❌ DB Error:", err.message);
-  });
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log(err));
 
-// API Routes
+// API routes
 app.use("/api/departments", require("./routes/index"));
 app.use("/api/auth", require("./routes/authRoutes"));
 
