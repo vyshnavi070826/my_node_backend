@@ -1,52 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Sign Up</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Signup | NxtStepGo</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="./style/styles.css">
+
 </head>
 
-<body>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
 
-<h2>Create Account</h2>
+<div class="bg-white p-8 rounded-lg shadow-lg w-96">
+
+<h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
 
 <form id="signupForm">
 
-<input type="text" id="name" placeholder="Name" required><br><br>
+<input
+type="text"
+placeholder="Name"
+id="name"
+class="w-full mb-4 p-2 border rounded"
+required
+/>
 
-<input type="email" id="email" placeholder="Email" required><br><br>
+<input
+type="email"
+placeholder="Email"
+id="email"
+class="w-full mb-4 p-2 border rounded"
+required
+/>
 
-<input type="password" id="password" placeholder="Password" required><br><br>
+<input
+type="password"
+placeholder="Password"
+id="password"
+class="w-full mb-4 p-2 border rounded"
+required
+/>
 
-<button type="submit">Sign Up</button>
+<button
+type="submit"
+class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+>
+Sign Up
+</button>
 
 </form>
 
-<p id="msg"></p>
+<p class="mt-4 text-center">
+Already have an account?
+<a href="/login.html" class="text-blue-600">Login</a>
+</p>
+
+</div>
 
 <script>
 
-document.getElementById("signupForm").addEventListener("submit", async (e)=>{
+document.getElementById("signupForm").addEventListener("submit", async (e) => {
 
 e.preventDefault();
 
-const name=document.getElementById("name").value;
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
+const name = document.getElementById("name").value;
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
 
-const res=await fetch("https://my-node-backend-6zba.onrender.com/api/auth/signup",{
+const response = await fetch("/api/auth/signup",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
 },
-body:JSON.stringify({
-name,
-email,
-password
-})
+body:JSON.stringify({name,email,password})
 });
 
-const data=await res.json();
+const data = await response.json();
 
-document.getElementById("msg").innerText=data.message || "Signup Successful";
+alert(data.message || "Signup successful");
+
+if(response.ok){
+window.location.href="/login.html";
+}
 
 });
 
