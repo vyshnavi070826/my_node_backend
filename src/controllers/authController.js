@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const UserPreference = require("../models/UserPreference");
 
 exports.signup = async (req, res) => {
   try {
@@ -33,8 +34,16 @@ exports.signup = async (req, res) => {
 
     await newUser.save();
 
+    // Initialize user preferences
+    const userPref = new UserPreference({
+      userId: newUser._id
+    });
+    await userPref.save();
+
     res.status(201).json({
-      message: "Signup successful"
+      message: "Signup successful",
+      userId: newUser._id,
+      user: newUser
     });
 
   } catch (error) {
@@ -64,8 +73,16 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Ensure user preferences exist
+    let userPref = await UserPreference.findOne({ userId: user._id });
+    if (!userPref) {
+      userPref = new UserPreference({ userId: user._id });
+      await userPref.save();
+    }
+
     res.json({
       message: "Login successful",
+      userId: user._id,
       user
     });
 

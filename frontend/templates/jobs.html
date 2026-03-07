@@ -42,6 +42,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const deptId = urlParams.get('dept') || 'biotech';
         const deptData = DATA[deptId];
+        const userId = localStorage.getItem('userId');
         
         document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
         
@@ -51,6 +52,35 @@
         const viewSkills = document.getElementById('view-skills');
         const viewResults = document.getElementById('view-results');
         const jobsGrid = document.getElementById('jobs-grid');
+
+        // Bookmark function
+        async function bookmarkJob(jobTitle) {
+            if (!userId) {
+                alert('Please login to bookmark jobs');
+                return;
+            }
+            try {
+                const response = await fetch('/api/preferences/bookmark', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({
+                        type: 'job',
+                        elementId: jobTitle,
+                        title: jobTitle,
+                        department: deptId,
+                        metadata: { deptId }
+                    })
+                });
+                if (response.ok) {
+                    alert('Added to bookmarks!');
+                }
+            } catch (error) {
+                console.log('Error bookmarking:', error);
+            }
+        }
 
         // Render Skill Buttons
         function renderSkills() {
@@ -88,16 +118,30 @@
             
             jobsGrid.innerHTML = '';
             if(deptData.jobRoles.length > 0) {
-                deptData.jobRoles.forEach(job => {
+                deptData.jobRoles.forEach((job, index) => {
                     const companiesHTML = job.companies.map(c => `<span class="text-xs font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl">${c}</span>`).join('');
-                    jobsGrid.innerHTML += `
-                        <div class="bg-white border p-12 rounded-[4rem] shadow-sm">
-                            <h3 class="text-4xl font-black text-slate-900 mb-4">${job.title}</h3>
-                            <p class="text-green-600 font-black text-xs uppercase tracking-widest mb-8">${job.salary}</p>
-                            <p class="text-slate-600 text-sm leading-relaxed mb-8">${job.jd}</p>
-                            <div class="flex flex-wrap gap-4">${companiesHTML}</div>
-                        </div>`;
+                    const jobDiv = document.createElement('div');
+                    jobDiv.className = 'bg-white border p-12 rounded-[4rem] shadow-sm hover:shadow-xl transition-all opacity-0';
+                    jobDiv.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.3 + index * 0.1}s forwards`;
+                    jobDiv.innerHTML = `
+                        <div class="flex items-start justify-between mb-4">
+                            <h3 class="text-4xl font-black text-slate-900">${job.title}</h3>
+                            <button class="p-3 hover:bg-purple-50 text-slate-400 hover:text-purple-600 transition rounded-lg bookmark-btn" data-title="${job.title}">
+                                <i data-lucide="bookmark" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+                        <p class="text-green-600 font-black text-xs uppercase tracking-widest mb-8">${job.salary}</p>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-8">${job.jd}</p>
+                        <div class="flex flex-wrap gap-4">${companiesHTML}</div>
+                    `;
+                    jobsGrid.appendChild(jobDiv);
+                    
+                    jobDiv.querySelector('.bookmark-btn').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        bookmarkJob(job.title);
+                    });
                 });
+                window.lucide.createIcons();
             } else {
                 jobsGrid.innerHTML = `<p class="text-slate-400 italic py-20 text-center col-span-full">Roles currently being updated for this branch.</p>`;
             }
