@@ -80,9 +80,8 @@ const userPreferenceSchema = new mongoose.Schema({
 });
 
 // Update updatedAt before saving
-userPreferenceSchema.pre('save', function(next) {
+userPreferenceSchema.pre('save', async function() {
   this.updatedAt = Date.now();
-  next();
 });
 
 module.exports = mongoose.model("UserPreference", userPreferenceSchema);
