@@ -1,57 +1,38 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-
-// SIGNUP
 exports.signup = async (req, res) => {
   try {
+
     const { name, email, password } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+    // Check if password length is valid
+    if(password.length < 6){
+      return res.status(400).json({
+        message: "Password must be at least 6 characters"
+      });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const User = require("../models/User");
 
-    // Save user in DB
-    const user = await User.create({
+    const existingUser = await User.findOne({ email });
+
+    if(existingUser){
+      return res.status(400).json({
+        message: "User already exists"
+      });
+    }
+
+    const newUser = new User({
       name,
       email,
-      password: hashedPassword
+      password
     });
 
-    res.status(201).json({ message: "Signup successful" });
+    await newUser.save();
 
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+    res.status(201).json({
+      message: "Signup successful"
+    });
 
-// LOGIN
-exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(400).json({ message: "User not found" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid password" });
-
-    const token = jwt.sign(
-      { id: user._id },
-      "secretkey",
-      { expiresIn: "1d" }
-    );
-
-    res.json({ message: "Login successful", token });
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch(err){
+    res.status(500).json({ message: err.message });
   }
 };
