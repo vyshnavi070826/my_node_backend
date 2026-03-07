@@ -48,12 +48,42 @@
         const deptInfo = DEPARTMENTS.find(d => d.id === deptId);
         const deptData = DATA[deptId];
         const programList = progType === 'phd' ? deptData.higherStudies.phd : deptData.higherStudies.mtech;
+        const userId = localStorage.getItem('userId');
 
         document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
         document.getElementById('page-title').innerText = progType === 'phd' ? 'Ph.D Programs' : 'PG Programs';
         document.getElementById('page-subtitle').innerText = `Detailed roadmap and official specialisations for ${deptInfo.name}.`;
 
         const grid = document.getElementById('programs-grid');
+        
+        // Bookmark function for programs
+        async function bookmarkProgram(instName, instId) {
+            if (!userId) {
+                alert('Please login to bookmark programs');
+                return;
+            }
+            try {
+                const response = await fetch('/api/preferences/bookmark', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({
+                        type: 'program',
+                        elementId: instId,
+                        title: instName,
+                        department: deptId,
+                        metadata: { deptId, progType, instId }
+                    })
+                });
+                if (response.ok) {
+                    alert('Added to bookmarks!');
+                }
+            } catch (error) {
+                console.log('Error bookmarking:', error);
+            }
+        }
         
         if (programList && programList.length > 0) {
             programList.forEach((inst, index) => {
@@ -71,9 +101,12 @@
                 }
 
                 const div = document.createElement('div');
-                div.className = "bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-2xl category-card p-8 md:p-10 opacity-0";
+                div.className = "bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-2xl category-card p-8 md:p-10 opacity-0 relative";
                 div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.4 + index * 0.1}s forwards`;
                 div.innerHTML = `
+                    <button class="absolute top-4 right-4 p-3 hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition rounded-lg bookmark-btn z-10" data-inst="${inst.name}" data-instid="${inst.name}">
+                        <i data-lucide="bookmark" class="w-5 h-5"></i>
+                    </button>
                     <div class="mb-6">
                         <h3 class="text-3xl font-bold text-slate-900 mb-2">${inst.name}</h3>
                         <div class="flex items-center gap-3">
@@ -98,6 +131,21 @@
                         </a>
                     </div>
                 `;
+                grid.appendChild(div);
+                
+                // Attach bookmark handler
+                div.querySelector('.bookmark-btn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    bookmarkProgram(inst.name, inst.name);
+                });
+            });
+        } else {
+            grid.innerHTML = `<p class="text-slate-400 italic py-20 text-center col-span-full">No programs listed for this category yet.</p>`;
+        }
+
+        initializePage();
+        if(window.lucide) window.lucide.createIcons();
+    </script>
                 grid.appendChild(div);
             });
         } else {
