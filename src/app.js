@@ -8,12 +8,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// SERVE FRONTEND FILES
+// Serve frontend files
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// Root route
+// Root route → open homepage
 app.get("/", (req, res) => {
-  res.send("Backend is running successfully 🚀");
+  res.sendFile(path.join(__dirname, "../frontend/templates/index.html"));
 });
 
 // MongoDB Connection
@@ -27,7 +27,7 @@ mongoose.connect(process.env.MONGO_URI)
     console.error("❌ DB Error:", err.message);
   });
 
-// Routes
+// API Routes
 app.use("/api/departments", require("./routes/index"));
 app.use("/api/auth", require("./routes/authRoutes"));
 
