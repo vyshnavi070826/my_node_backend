@@ -8,8 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend pages
-app.use(express.static(path.join(__dirname, "../frontend/templates")));
+// Serve all frontend files
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 // Homepage
 app.get("/", (req, res) => {
@@ -21,7 +21,7 @@ mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
 
-// API routes
+// Routes
 app.use("/api/departments", require("./routes/index"));
 app.use("/api/auth", require("./routes/authRoutes"));
 
