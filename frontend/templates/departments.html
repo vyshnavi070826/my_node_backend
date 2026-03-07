@@ -41,12 +41,44 @@
         const grid = document.getElementById('dept-grid');
         const userId = localStorage.getItem('userId');
 
+        // Bookmark function for programs
+        async function bookmarkProgram(deptName, deptId, type) {
+            if (!userId) {
+                alert('Please login to bookmark programs');
+                return;
+            }
+            try {
+                const response = await fetch('/api/preferences/bookmark', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({
+                        type: type,
+                        elementId: deptId,
+                        title: deptName,
+                        department: deptId,
+                        metadata: { deptId, type }
+                    })
+                });
+                if (response.ok) {
+                    alert('Added to bookmarks!');
+                }
+            } catch (error) {
+                console.log('Error bookmarking:', error);
+            }
+        }
+
         DEPARTMENTS.forEach((dept, index) => {
-            // Note the ?dept= parameter passing the ID to the hub
+            // Create wrapper div instead of link to add bookmark button
+            const wrapper = document.createElement('div');
+            wrapper.className = `relative group opacity-0`;
+            wrapper.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s forwards`;
+            
             const a = document.createElement('a');
             a.href = `hub.html?dept=${dept.id}`;
-            a.className = `group p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm hover:shadow-2xl hover:border-blue-500 category-card text-left flex flex-col items-start relative overflow-hidden block stagger-${(index % 6) + 1} opacity-0`;
-            a.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s forwards`;
+            a.className = `group p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm hover:shadow-2xl hover:border-blue-500 category-card text-left flex flex-col items-start relative overflow-hidden block`;
             a.innerHTML = `
                 <div class="text-6xl mb-8 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 text-blue-600">
                     <i data-lucide="${dept.icon}" style="width: 64px; height: 64px;"></i>
@@ -56,6 +88,19 @@
                     View Hub <i data-lucide="chevron-right" class="w-4 h-4 group-hover:translate-x-2 transition-transform"></i>
                 </div>
             `;
+            
+            // Add bookmark button overlay
+            const bookmarkBtn = document.createElement('button');
+            bookmarkBtn.className = 'absolute top-4 right-4 p-3 hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition rounded-lg z-10';
+            bookmarkBtn.innerHTML = '<i data-lucide="bookmark" class="w-5 h-5"></i>';
+            bookmarkBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                bookmarkProgram(dept.name, dept.id, 'program');
+            });
+            
+            a.appendChild(bookmarkBtn);
+            wrapper.appendChild(a);
             
             // Track department visit if user is logged in
             a.addEventListener('click', async (e) => {
@@ -75,7 +120,7 @@
                 }
             });
             
-            grid.appendChild(a);
+            grid.appendChild(wrapper);
         });
         initializePage();
     </script>

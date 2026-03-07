@@ -25,16 +25,49 @@
         const urlParams = new URLSearchParams(window.location.search);
         const deptId = urlParams.get('dept') || 'biotech';
         const examData = DATA[deptId].exams;
+        const userId = localStorage.getItem('userId');
 
         document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
         const grid = document.getElementById('exams-grid');
 
+        // Bookmark function for exams
+        async function bookmarkExam(examName, examId) {
+            if (!userId) {
+                alert('Please login to bookmark exams');
+                return;
+            }
+            try {
+                const response = await fetch('/api/preferences/bookmark', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({
+                        type: 'exam',
+                        elementId: examId,
+                        title: examName,
+                        department: deptId,
+                        metadata: { deptId, examId }
+                    })
+                });
+                if (response.ok) {
+                    alert('Added to bookmarks!');
+                }
+            } catch (error) {
+                console.log('Error bookmarking:', error);
+            }
+        }
+
         if (examData && examData.length > 0) {
             examData.forEach((exam, index) => {
                 const div = document.createElement('div');
-                div.className = "bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col hover:shadow-2xl category-card opacity-0";
+                div.className = "bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col hover:shadow-2xl category-card opacity-0 relative";
                 div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.2 + index * 0.1}s forwards`;
                 div.innerHTML = `
+                    <button class="absolute top-4 right-4 p-3 hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition rounded-lg bookmark-btn" data-exam="${exam.name}" data-examid="${exam.name}">
+                        <i data-lucide="bookmark" class="w-5 h-5"></i>
+                    </button>
                     <div class="bg-blue-50 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center mb-6 icon-bounce">
                         <i data-lucide="file-text" class="w-6 h-6"></i>
                     </div>
@@ -64,6 +97,12 @@
                     </div>
                 `;
                 grid.appendChild(div);
+                
+                // Attach bookmark handler
+                div.querySelector('.bookmark-btn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    bookmarkExam(exam.name, exam.name);
+                });
             });
         } else {
             grid.innerHTML = `<p class="text-slate-400 italic py-20 text-center col-span-full">Exam info arriving soon.</p>`;
