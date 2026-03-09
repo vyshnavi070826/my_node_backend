@@ -20,6 +20,27 @@ app.get("/index.html", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/templates/index.html"));
 });
 
+// Template HTML routes (serve from templates folder)
+const templateFiles = [
+  'departments.html',
+  'hub.html',
+  'jobs.html',
+  'exams.html',
+  'programs.html',
+  'startup.html',
+  'startup-guide.html',
+  'skill-matcher.html',
+  'NxstepGo.html',
+  'login.html',
+  'signup.html'
+];
+
+templateFiles.forEach(file => {
+  app.get(`/${file}`, (req, res) => {
+    res.sendFile(path.join(__dirname, `../frontend/templates/${file}`));
+  });
+});
+
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected"))
