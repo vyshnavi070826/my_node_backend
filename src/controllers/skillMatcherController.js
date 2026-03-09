@@ -1,4 +1,61 @@
 const DATA = require('../models/skillData');
+const axios = require('axios');
+
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:5001';
+const AI_SERVICE_TIMEOUT = 30000; // 30 seconds timeout for AI service
+
+// ============================================================================
+// AI SERVICE PROXY (with fallback to basic matching)
+// ============================================================================
+
+/**
+ * Try to use Python AI service for semantic matching
+ * Falls back to basic string matching if AI service unavailable
+ */
+exports.matchSkillsToJobs = async (req, res) => {
+    try {
+        const { skills, department = 'all' } = req.body;
+        
+        if (!skills || skills.trim().length === 0) {
+            return res.status(400).json({ 
+                error: 'Please provide at least one skill' 
+            });
+        }
+        
+        // Try AI service first
+        try {
+            const aiResponse = await axios.post(
+                `${AI_SERVICE_URL}/api/ai-match`,
+                { skills, department },
+                { timeout: AI_SERVICE_TIMEOUT }
+            );
+            
+            console.log('✓ Using AI service for skill matching');
+            return res.status(200).json({
+                success: true,
+                method: 'ai-semantic',
+                ...aiResponse.data
+            });
+        } catch (aiError) {
+            // Log AI service error but fall back to basic matching
+            console.warn('AI service unavailable, falling back to basic matching:', aiError.message);
+            
+            // Fall back to basic string matching
+            return matchSkillsToJobsBasic(req, res);
+        }
+        
+    } catch (error) {
+        console.error('Skill matching error:', error);
+        res.status(500).json({ 
+            error: 'Error matching skills to jobs',
+            details: error.message 
+        });
+    }
+};
+
+// ============================================================================
+// BASIC MATCHING FALLBACK (string-based)
+// ============================================================================
 
 // Skill similarity scoring (0-1)
 const calculateSkillSimilarity = (userSkill, requiredSkill) => {
@@ -91,18 +148,13 @@ const matchJobToSkills = (job, userSkills) => {
     };
 };
 
-// Main skill matcher endpoint
-exports.matchSkillsToJobs = async (req, res) => {
+/**
+ * Basic matching fallback using string/fuzzy matching
+ * Used when AI service is not available
+ */
+const matchSkillsToJobsBasic = async (req, res) => {
     try {
         const { skills, department = 'all' } = req.body;
-        
-        if (!skills || skills.trim().length === 0) {
-            return res.status(400).json({ 
-                error: 'Please provide at least one skill' 
-            });
-        }
-        
-        const DATA = require('../models/skillData');
         
         // Collect all jobs from selected department(s)
         let allJobs = [];
@@ -111,8 +163,8 @@ exports.matchSkillsToJobs = async (req, res) => {
             : [department];
         
         departments.forEach(dept => {
-            if (DATA[dept] && DATA[dept].jobsEnhanced) {
-                DATA[dept].jobsEnhanced.forEach(job => {
+            if (DATA[dept]) {
+                DATA[dept].forEach(job => {
                     allJobs.push({ ...job, department: dept });
                 });
             }
@@ -133,6 +185,7 @@ exports.matchSkillsToJobs = async (req, res) => {
         
         res.status(200).json({
             success: true,
+            method: 'basic-string-match',
             skillsProvided: skills.split(',').map(s => s.trim()),
             totalMatches: matchedJobs.length,
             matches: matchedJobs.slice(0, 15), // Top 15 matches
@@ -143,7 +196,7 @@ exports.matchSkillsToJobs = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Skill matching error:', error);
+        console.error('Basic matching error:', error);
         res.status(500).json({ 
             error: 'Error matching skills to jobs',
             details: error.message 
@@ -154,27 +207,46 @@ exports.matchSkillsToJobs = async (req, res) => {
 // Get all available job skills for autocomplete
 exports.getAvailableSkills = async (req, res) => {
     try {
-        const DATA = require('../models/skillData');
-        
-        const allSkills = new Set();
-        
-        ['chem-eng', 'biotech', 'bioinfo', 'bioeng-nano', 'chem'].forEach(dept => {
-            if (DATA[dept] && DATA[dept].jobsEnhanced) {
-                DATA[dept].jobsEnhanced.forEach(job => {
-                    if (job.requiredSkills && Array.isArray(job.requiredSkills)) {
-                        job.requiredSkills.forEach(skill => allSkills.add(skill));
-                    }
-                });
-            }
-        });
-        
-        res.status(200).json({
-            success: true,
-            availableSkills: Array.from(allSkills).sort()
-        });
+        // Try AI service first
+        try {
+            const aiResponse = await axios.get(
+                `${AI_SERVICE_URL}/api/available-skills`,
+                { timeout: AI_SERVICE_TIMEOUT }
+            );
+            
+            console.log('✓ Using AI service for available skills');
+            return res.status(200).json({
+                success: true,
+                method: 'ai-semantic',
+                ...aiResponse.data
+            });
+        } catch (aiError) {
+            // Fall back to basic method
+            console.warn('AI service unavailable for skills list, using local data');
+            
+            const allSkills = new Set();
+            
+            ['chem-eng', 'biotech', 'bioinfo', 'bioeng-nano', 'chem'].forEach(dept => {
+                if (DATA[dept]) {
+                    DATA[dept].forEach(job => {
+                        if (job.requiredSkills && Array.isArray(job.requiredSkills)) {
+                            job.requiredSkills.forEach(skill => allSkills.add(skill));
+                        }
+                    });
+                }
+            });
+            
+            res.status(200).json({
+                success: true,
+                method: 'local-data',
+                availableSkills: Array.from(allSkills).sort()
+            });
+        }
     } catch (error) {
+        console.error('Error fetching available skills:', error);
         res.status(500).json({ 
-            error: 'Error fetching available skills' 
+            error: 'Error fetching available skills',
+            details: error.message
         });
     }
 };
