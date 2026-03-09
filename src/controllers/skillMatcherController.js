@@ -89,9 +89,8 @@ exports.extractSkillsFromText = async (req, res) => {
             // Fall back to basic text parsing
             console.warn('AI service unavailable for extraction, using basic parsing:', aiError.message);
             
-            // Simple extraction: split by comma and match against known skills
+            // Simple extraction: check if skill names appear in the text
             const textLower = text.toLowerCase();
-            const keywords = textLower.split(/[,;]/).map(s => s.trim()).filter(s => s.length > 0);
             
             const allSkills = new Set();
             ['chem-eng', 'biotech', 'bioinfo', 'bioeng-nano', 'chem'].forEach(dept => {
@@ -104,9 +103,17 @@ exports.extractSkillsFromText = async (req, res) => {
                 }
             });
             
+            // Extract skills: check if skill name (or substring) appears in text
             const extractedSkills = Array.from(allSkills)
-                .filter(skill => keywords.some(keyword => skill.toLowerCase().includes(keyword)))
+                .filter(skill => {
+                    const skillLower = skill.toLowerCase();
+                    // Check if skill name or parts of it appear in the text
+                    const skillParts = skillLower.split(/[\s\-\/\+]/);
+                    return skillParts.some(part => part.length > 2 && textLower.includes(part));
+                })
                 .map(skill => ({ skill, confidence: 70 }));
+            
+            console.log('Extracted skills (basic):', extractedSkills.map(s => s.skill));
             
             return res.status(200).json({
                 success: true,
@@ -114,7 +121,8 @@ exports.extractSkillsFromText = async (req, res) => {
                 originalText: text,
                 extractedSkills: extractedSkills,
                 skillCount: extractedSkills.length,
-                skillsList: extractedSkills.map(s => s.skill)
+                skillsList: extractedSkills.map(s => s.skill),
+                topSkills: extractedSkills.slice(0, 10)
             });
         }
     } catch (error) {
