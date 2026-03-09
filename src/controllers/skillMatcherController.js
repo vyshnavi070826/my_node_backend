@@ -54,6 +54,79 @@ exports.matchSkillsToJobs = async (req, res) => {
 };
 
 // ============================================================================
+// SKILL EXTRACTION (from free-text description)
+// ============================================================================
+
+/**
+ * Extract skills from free-text user input using AI
+ * Understands natural language and identifies relevant skills
+ */
+exports.extractSkillsFromText = async (req, res) => {
+    try {
+        const { text, threshold = 0.65 } = req.body;
+        
+        if (!text || text.trim().length === 0) {
+            return res.status(400).json({ 
+                error: 'Please provide text to analyze' 
+            });
+        }
+        
+        // Try AI service first
+        try {
+            const aiResponse = await axios.post(
+                `${AI_SERVICE_URL}/api/extract-skills`,
+                { text, threshold },
+                { timeout: AI_SERVICE_TIMEOUT }
+            );
+            
+            console.log('✓ Using AI service for skill extraction');
+            return res.status(200).json({
+                success: true,
+                method: 'ai-extraction',
+                ...aiResponse.data
+            });
+        } catch (aiError) {
+            // Fall back to basic text parsing
+            console.warn('AI service unavailable for extraction, using basic parsing:', aiError.message);
+            
+            // Simple extraction: split by comma and match against known skills
+            const textLower = text.toLowerCase();
+            const keywords = textLower.split(/[,;]/).map(s => s.trim()).filter(s => s.length > 0);
+            
+            const allSkills = new Set();
+            ['chem-eng', 'biotech', 'bioinfo', 'bioeng-nano', 'chem'].forEach(dept => {
+                if (DATA[dept]) {
+                    DATA[dept].forEach(job => {
+                        if (job.requiredSkills && Array.isArray(job.requiredSkills)) {
+                            job.requiredSkills.forEach(skill => allSkills.add(skill));
+                        }
+                    });
+                }
+            });
+            
+            const extractedSkills = Array.from(allSkills)
+                .filter(skill => keywords.some(keyword => skill.toLowerCase().includes(keyword)))
+                .map(skill => ({ skill, confidence: 70 }));
+            
+            return res.status(200).json({
+                success: true,
+                method: 'basic-extraction',
+                originalText: text,
+                extractedSkills: extractedSkills,
+                skillCount: extractedSkills.length,
+                skillsList: extractedSkills.map(s => s.skill)
+            });
+        }
+    } catch (error) {
+        console.error('Skill extraction error:', error);
+        res.status(500).json({ 
+            error: 'Error extracting skills',
+            details: error.message 
+        });
+    }
+};
+
+// ============================================================================
 // BASIC MATCHING FALLBACK (string-based)
 // ============================================================================
 

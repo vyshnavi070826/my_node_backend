@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const skillMatcherController = require('../controllers/skillMatcherController');
 
+// Extract skills from free-text description
+router.post('/extract', skillMatcherController.extractSkillsFromText);
+
 // Match user skills to available jobs
 router.post('/match', skillMatcherController.matchSkillsToJobs);
 

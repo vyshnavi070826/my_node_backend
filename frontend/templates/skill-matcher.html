@@ -200,13 +200,14 @@
 
     <script>
         const API_BASE = '/api/skill-matcher';
+        let extractedSkillsList = []; // Store extracted skills globally
         
         async function matchSkills() {
-            const skills = document.getElementById('skillsInput').value.trim();
+            const userText = document.getElementById('skillsInput').value.trim();
             const department = document.getElementById('departmentFilter').value;
 
-            if (!skills) {
-                alert('Please enter at least one skill');
+            if (!userText) {
+                alert('Please enter at least one skill or description');
                 return;
             }
 
@@ -215,17 +216,46 @@
             document.getElementById('errorState').classList.add('hidden');
 
             try {
-                const response = await fetch(`${API_BASE}/match`, {
+                // Step 1: Extract skills from text using AI
+                console.log('Step 1: Extracting skills from text...');
+                const extractResponse = await fetch(`${API_BASE}/extract`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ skills, department })
+                    body: JSON.stringify({ text: userText })
                 });
 
-                const data = await response.json();
+                const extractData = await extractResponse.json();
+                
+                if (!extractResponse.ok) {
+                    throw new Error(extractData.error || 'Failed to extract skills');
+                }
 
-                if (!response.ok) throw new Error(data.error);
+                console.log('✓ Extracted skills:', extractData.skillsList);
+                extractedSkillsList = extractData.skillsList;
 
-                displayResults(data);
+                // Show extraction status
+                updateLoadingMessage(`Found ${extractData.skillCount} skills: ${extractData.topSkills.map(s => s.skill).join(', ')}`);
+
+                // Step 2: Match extracted skills to jobs
+                if (extractData.skillCount === 0) {
+                    throw new Error('No recognizable skills found. Please try a different description.');
+                }
+
+                console.log('Step 2: Matching extracted skills to jobs...');
+                const skillsString = extractData.skillsList.join(', ');
+                
+                const matchResponse = await fetch(`${API_BASE}/match`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ skills: skillsString, department })
+                });
+
+                const matchData = await matchResponse.json();
+
+                if (!matchResponse.ok) throw new Error(matchData.error);
+
+                console.log('✓ Matching complete');
+                displayResults(matchData, extractData);
             } catch (error) {
                 document.getElementById('errorState').classList.remove('hidden');
                 document.getElementById('errorMessage').textContent = error.message;
@@ -235,7 +265,14 @@
             }
         }
 
-        function displayResults(data) {
+        function updateLoadingMessage(message) {
+            const loadingMessage = document.querySelector('#loadingState p');
+            if (loadingMessage) {
+                loadingMessage.textContent = message;
+            }
+        }
+
+        function displayResults(data, extractionData) {
             const { matches, topMatch, totalMatches } = data;
 
             if (totalMatches === 0) {
@@ -244,9 +281,20 @@
                 return;
             }
 
+            // Show extraction step info
+            let extractionInfo = '';
+            if (extractionData && extractionData.skillsList) {
+                extractionInfo = `
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+                        <p class="text-sm text-gray-600"><strong>AI Extracted Skills:</strong> ${extractionData.skillsList.join(', ')}</p>
+                        <p class="text-xs text-gray-500 mt-2">Method: ${extractionData.method === 'skill-extraction' ? 'AI Semantic Understanding' : 'Basic Text Parsing'}</p>
+                    </div>
+                `;
+            }
+
             // Top Match
             if (topMatch) {
-                document.getElementById('topMatchContainer').innerHTML = `
+                document.getElementById('topMatchContainer').innerHTML = extractionInfo + `
                     <div class="top-match">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-3xl font-bold">${topMatch.title}</h2>

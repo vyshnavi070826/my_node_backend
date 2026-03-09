@@ -343,6 +343,69 @@ def calculate_similarity():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/extract-skills', methods=['POST'])
+def extract_skills():
+    """
+    Extract skills from free-text user description using semantic similarity.
+    Understands natural language and identifies relevant skills from job database.
+    """
+    try:
+        data = request.json
+        user_text = data.get('text', '').strip()
+        confidence_threshold = float(data.get('threshold', 0.65))
+        
+        if not user_text:
+            return jsonify({'error': 'Please provide text to analyze'}), 400
+        
+        # Get all unique skills from database
+        all_skills = set()
+        for dept_jobs in SKILL_DATA.values():
+            for job in dept_jobs:
+                if 'requiredSkills' in job:
+                    all_skills.update(job['requiredSkills'])
+        
+        all_skills = sorted(list(all_skills))
+        
+        # Encode user text
+        user_embedding = matcher.encode_text(user_text)
+        
+        # Score each skill against user text
+        skill_scores = {}
+        for skill in all_skills:
+            skill_embedding = matcher.encode_text(skill)
+            similarity = float(util.pytorch_cos_sim(user_embedding, skill_embedding).item())
+            skill_scores[skill] = similarity
+        
+        # Extract skills above threshold, sorted by confidence
+        extracted_skills = [
+            {
+                'skill': skill,
+                'confidence': round(score * 100, 1),
+                'confidenceRaw': round(score, 3)
+            }
+            for skill, score in skill_scores.items()
+            if score >= confidence_threshold
+        ]
+        
+        # Sort by confidence (descending)
+        extracted_skills.sort(key=lambda x: x['confidenceRaw'], reverse=True)
+        
+        # Also return context (what was in the text)
+        return jsonify({
+            'success': True,
+            'method': 'skill-extraction',
+            'originalText': user_text,
+            'confidenceThreshold': confidence_threshold,
+            'extractedSkills': extracted_skills,
+            'skillCount': len(extracted_skills),
+            'skillsList': [s['skill'] for s in extracted_skills],
+            'topSkills': extracted_skills[:10]  # Top 10 for quick preview
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Skill extraction error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.getenv('FLASK_PORT', 5001))
     logger.info(f"Starting AI Skill Matcher on port {port}...")
