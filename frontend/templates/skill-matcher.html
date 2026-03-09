@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Skill Matcher - Find Your Perfect Job</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style/styles.css">
+    <style>
+        .skill-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            margin: 0.3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .skill-tag:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .skill-tag.matched { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
+        .skill-tag.remaining { background: linear-gradient(135deg, #f97316 0%, #dc2626 100%); }
+        
+        .confidence-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .confidence-low { background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%); }
+        .confidence-medium { background: linear-gradient(90deg, #f59e0b 0%, #b45309 100%); }
+        .confidence-high { background: linear-gradient(90deg, #10b981 0%, #047857 100%); }
+        
+        .job-card {
+            background: white;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        .job-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        }
+        
+        .learning-link {
+            display: inline-block;
+            background: #f0f4ff;
+            border-left: 3px solid #667eea;
+            padding: 0.8rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .learning-link:hover {
+            background: #667eea;
+            color: white;
+            border-left-color: white;
+        }
+        .learning-link a {
+            color: inherit;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .top-match {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <!-- Navigation -->
+    <nav id="navbar" class="sticky top-0 z-50 bg-white bg-opacity-95 backdrop-blur-sm transition-all duration-300 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/index.html" class="flex items-center gap-2 font-bold text-2xl text-indigo-600">
+                <i data-lucide="sparkles" class="w-6 h-6"></i> NextStep
+            </a>
+            <div class="flex items-center gap-4">
+                <button onclick="goBack()" class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i> Back
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 py-12">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                AI-Powered Skill Matcher
+            </h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Describe your skills and discover job opportunities perfectly matched to your profile. Get personalized learning recommendations to close skill gaps.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Skills Input -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-800 mb-4">What skills do you have?</label>
+                    <textarea id="skillsInput" 
+                        class="w-full h-40 p-4 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none resize-none placeholder-gray-400"
+                        placeholder="E.g., Python, MATLAB, Machine Learning, Data Analysis, Thermodynamics, etc.&#10;Separate skills with commas or just describe your capabilities..."></textarea>
+                    <p class="text-sm text-gray-500 mt-2"><i data-lucide="info" class="w-4 h-4 inline"></i> Be specific and include all relevant skills</p>
+                </div>
+
+                <!-- Department Filter -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-800 mb-4">Select Department (Optional)</label>
+                    <select id="departmentFilter" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none mb-4">
+                        <option value="all">All Departments</option>
+                        <option value="chem-eng">Chemical Engineering</option>
+                        <option value="biotech">Biotechnology</option>
+                        <option value="bioinfo">Bioinformatics</option>
+                        <option value="bioeng-nano">Bioengineering</option>
+                        <option value="chem">Chemistry</option>
+                    </select>
+
+                    <!-- Action Button -->
+                    <button id="matchBtn" onclick="matchSkills()" 
+                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition transform hover:scale-105 flex items-center justify-center gap-2">
+                        <i data-lucide="zap" class="w-5 h-5"></i> Find Matching Jobs
+                    </button>
+
+                    <p class="text-xs text-gray-500 mt-4 text-center">Using advanced AI matching algorithm</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden text-center py-12">
+            <div class="inline-block">
+                <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            </div>
+            <p class="text-gray-600 mt-4">Analyzing your skills...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden">
+            <!-- Top Match Highlight -->
+            <div id="topMatchContainer"></div>
+
+            <!-- All Matches -->
+            <div class="mt-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <i data-lucide="briefcase" class="w-8 h-8 text-indigo-600"></i>
+                    Job Opportunities
+                    <span id="matchCount" class="text-sm bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full font-normal"></span>
+                </h2>
+
+                <div id="jobsContainer"></div>
+            </div>
+
+            <!-- No Results State -->
+            <div id="noResultsState" class="hidden text-center py-12">
+                <i data-lucide="search" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+                <p class="text-gray-600 text-lg">No exact matches found. Try adding more skills or selecting different departments.</p>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden bg-red-50 border-l-4 border-red-500 p-6 rounded-lg">
+            <div class="flex items-center gap-4">
+                <i data-lucide="alert-circle" class="w-6 h-6 text-red-500"></i>
+                <div>
+                    <h3 class="font-bold text-red-700">Matching Error</h3>
+                    <p id="errorMessage" class="text-red-600"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/skill-matcher';
+        
+        async function matchSkills() {
+            const skills = document.getElementById('skillsInput').value.trim();
+            const department = document.getElementById('departmentFilter').value;
+
+            if (!skills) {
+                alert('Please enter at least one skill');
+                return;
+            }
+
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('errorState').classList.add('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE}/match`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ skills, department })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error);
+
+                displayResults(data);
+            } catch (error) {
+                document.getElementById('errorState').classList.remove('hidden');
+                document.getElementById('errorMessage').textContent = error.message;
+                console.error('Error:', error);
+            } finally {
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        function displayResults(data) {
+            const { matches, topMatch, totalMatches } = data;
+
+            if (totalMatches === 0) {
+                document.getElementById('noResultsState').classList.remove('hidden');
+                document.getElementById('resultsSection').classList.remove('hidden');
+                return;
+            }
+
+            // Top Match
+            if (topMatch) {
+                document.getElementById('topMatchContainer').innerHTML = `
+                    <div class="top-match">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-3xl font-bold">${topMatch.title}</h2>
+                            <span class="bg-yellow-300 text-gray-900 font-bold px-4 py-2 rounded-full">⭐ Best Match</span>
+                        </div>
+                        <div class="flex gap-6 mb-6 flex-wrap justify-center">
+                            <div>
+                                <p class="text-sm opacity-80">Confidence</p>
+                                <p class="text-3xl font-bold">${topMatch.confidence}%</p>
+                            </div>
+                            <div>
+                                <p class="text-sm opacity-80">Annual Salary</p>
+                                <p class="text-2xl font-bold">${topMatch.salary}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm opacity-80">Department</p>
+                                <p class="text-lg font-bold capitalize">${topMatch.department}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="/templates/jobs.html?dept=${topMatch.department}" class="inline-block bg-white text-indigo-600 px-6 py-2 rounded-lg font-bold hover:bg-gray-100 transition">
+                                View All ${topMatch.department} Jobs →
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // All Jobs
+            const jobsHtml = matches.map(job => createJobCard(job)).join('');
+            document.getElementById('jobsContainer').innerHTML = jobsHtml || '<p class="text-gray-500">No matches found</p>';
+            document.getElementById('matchCount').textContent = `${totalMatches} Match${totalMatches !== 1 ? 'es' : ''}`;
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            // Initialize icons
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function createJobCard(job) {
+            const confidenceClass = 
+                job.confidence >= 80 ? 'confidence-high' :
+                job.confidence >= 60 ? 'confidence-medium' : 'confidence-low';
+
+            const matchedSkillsTags = job.matchedSkills
+                .map(skill => `<span class="skill-tag matched">${skill}</span>`)
+                .join('');
+
+            const remainingSkillsTags = job.remainingSkills
+                .map((skill, idx) => createLearningResourceLink(skill, job.learningResources[skill], idx))
+                .join('');
+
+            return `
+                <div class="job-card">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">${job.title}</h3>
+                            <p class="text-sm text-gray-500 mt-1">${job.companies.join(' • ')}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-indigo-600">${job.salary}</p>
+                            <p class="text-xs text-gray-500">Dept: ${job.department}</p>
+                        </div>
+                    </div>
+
+                    <!-- Confidence Score -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-semibold text-gray-700">Match Confidence</span>
+                            <span class="font-bold text-lg text-indigo-600">${job.confidence}%</span>
+                        </div>
+                        <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="confidence-bar ${confidenceClass} h-full" style="width: ${job.confidence}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Job Description -->
+                    <p class="text-gray-600 mb-4">${job.jd}</p>
+
+                    <!-- Matched Skills -->
+                    <div class="mb-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Your Matching Skills:</h4>
+                        <div>${matchedSkillsTags || '<span class="text-gray-500 text-sm">No matched skills yet</span>'}</div>
+                    </div>
+
+                    <!-- Remaining Skills with Learning Resources -->
+                    ${job.remainingSkills.length > 0 ? `
+                        <div class="mb-4 bg-orange-50 p-4 rounded-lg border-l-4 border-orange-300">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                <i data-lucide="target" class="w-4 h-4 text-orange-600"></i>
+                                Skills to develop (+${Math.round((100 - job.confidence) / job.remainingSkills.length)}% each):
+                            </h4>
+                            ${remainingSkillsTags}
+                        </div>
+                    ` : ''}
+
+                    <!-- Bookmark Button -->
+                    <button onclick="bookmarkJob('${job.title}')" class="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 transition font-semibold">
+                        <i data-lucide="bookmark" class="w-5 h-5"></i> Bookmark
+                    </button>
+                </div>
+            `;
+        }
+
+        function createLearningResourceLink(skill, resources, idx) {
+            if (!resources || resources.length === 0) {
+                return `<div class="skill-tag remaining">${skill}</div>`;
+            }
+
+            const resource = resources[0]; // Top resource
+            return `
+                <div class="learning-link">
+                    <a href="${resource.url}" target="_blank" rel="noopener noreferrer">
+                        <i data-lucide="link" class="w-4 h-4"></i>
+                        <span class="font-semibold">${skill}</span> - Learn on ${resource.provider}
+                    </a>
+                </div>
+            `;
+        }
+
+        function bookmarkJob(title) {
+            alert(`Job "${title}" bookmarked! (Feature coming soon)`);
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

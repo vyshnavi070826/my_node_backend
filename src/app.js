@@ -29,5 +29,6 @@ mongoose.connect(process.env.MONGO_URI)
 app.use("/api/departments", require("./routes/index"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/preferences", require("./routes/preferenceRoutes"));
+app.use("/api/skill-matcher", require("./routes/skillMatcherRoutes"));
 
 module.exports = app;

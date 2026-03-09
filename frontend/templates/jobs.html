@@ -10,9 +10,14 @@
 </head>
 <body class="bg-slate-50 text-slate-900 hero-gradient">
     <main class="max-w-5xl mx-auto py-32 px-6 animate-in min-h-screen">
-        <a id="back-btn" href="hub.html" class="mb-12 inline-flex items-center text-slate-400 font-black hover:text-blue-600 transition-colors uppercase tracking-[0.3em] text-[10px] group">
-            <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Back to hub
-        </a>
+        <div class="flex justify-between items-center mb-12">
+            <a id="back-btn" href="hub.html" class="inline-flex items-center text-slate-400 font-black hover:text-blue-600 transition-colors uppercase tracking-[0.3em] text-[10px] group">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Back to hub
+            </a>
+            <a href="skill-matcher.html" class="inline-flex items-center text-slate-400 font-black hover:text-indigo-600 transition-colors uppercase tracking-[0.3em] text-[10px] group gap-2">
+                <i data-lucide="zap" class="w-4 h-4"></i> AI Skill Matcher
+            </a>
+        </div>
 
         <div id="view-skills" class="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-100 block card-hover opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;">
             <div class="bg-slate-900 p-16 text-white relative">
