@@ -226,15 +226,17 @@
 
                 const extractData = await extractResponse.json();
                 
+                console.log('Extraction response:', extractData);
+                
                 if (!extractResponse.ok) {
                     throw new Error(extractData.error || 'Failed to extract skills');
                 }
 
                 console.log('✓ Extracted skills:', extractData.skillsList);
-                extractedSkillsList = extractData.skillsList;
+                extractedSkillsList = extractData.skillsList || [];
 
                 // Show extraction status
-                updateLoadingMessage(`Found ${extractData.skillCount} skills: ${extractData.topSkills.map(s => s.skill).join(', ')}`);
+                updateLoadingMessage(`Found ${extractData.skillCount} skills: ${(extractData.topSkills || []).map(s => s.skill).join(', ')}`);
 
                 // Step 2: Match extracted skills to jobs
                 if (extractData.skillCount === 0) {
@@ -251,6 +253,8 @@
                 });
 
                 const matchData = await matchResponse.json();
+                
+                console.log('Match response:', matchData);
 
                 if (!matchResponse.ok) throw new Error(matchData.error);
 
@@ -273,7 +277,9 @@
         }
 
         function displayResults(data, extractionData) {
-            const { matches, topMatch, totalMatches } = data;
+            const matches = data.matches || [];
+            const topMatch = data.topMatch;
+            const totalMatches = data.totalMatches || matches.length;
 
             if (totalMatches === 0) {
                 document.getElementById('noResultsState').classList.remove('hidden');
@@ -283,7 +289,7 @@
 
             // Show extraction step info
             let extractionInfo = '';
-            if (extractionData && extractionData.skillsList) {
+            if (extractionData && Array.isArray(extractionData.skillsList)) {
                 extractionInfo = `
                     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
                         <p class="text-sm text-gray-600"><strong>AI Extracted Skills:</strong> ${extractionData.skillsList.join(', ')}</p>
@@ -324,7 +330,15 @@
             }
 
             // All Jobs
-            const jobsHtml = matches.map(job => createJobCard(job)).join('');
+            const jobsHtml = matches.map(job => {
+                try {
+                    return createJobCard(job);
+                } catch (e) {
+                    console.error('Error creating job card for job:', job, e);
+                    return '';
+                }
+            }).join('');
+            
             document.getElementById('jobsContainer').innerHTML = jobsHtml || '<p class="text-gray-500">No matches found</p>';
             document.getElementById('matchCount').textContent = `${totalMatches} Match${totalMatches !== 1 ? 'es' : ''}`;
             document.getElementById('resultsSection').classList.remove('hidden');
@@ -334,16 +348,22 @@
         }
 
         function createJobCard(job) {
-            const confidenceClass = 
-                job.confidence >= 80 ? 'confidence-high' :
-                job.confidence >= 60 ? 'confidence-medium' : 'confidence-low';
+            // Ensure all required fields exist with defaults
+            const matchedSkills = Array.isArray(job.matchedSkills) ? job.matchedSkills : [];
+            const remainingSkills = Array.isArray(job.remainingSkills) ? job.remainingSkills : [];
+            const learningResources = job.learningResources || {};
+            const confidence = job.confidence || 0;
 
-            const matchedSkillsTags = job.matchedSkills
+            const confidenceClass = 
+                confidence >= 80 ? 'confidence-high' :
+                confidence >= 60 ? 'confidence-medium' : 'confidence-low';
+
+            const matchedSkillsTags = matchedSkills
                 .map(skill => `<span class="skill-tag matched">${skill}</span>`)
                 .join('');
 
-            const remainingSkillsTags = job.remainingSkills
-                .map((skill, idx) => createLearningResourceLink(skill, job.learningResources[skill], idx))
+            const remainingSkillsTags = remainingSkills
+                .map((skill, idx) => createLearningResourceLink(skill, learningResources[skill], idx))
                 .join('');
 
             return `
@@ -351,7 +371,7 @@
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h3 class="text-2xl font-bold text-gray-800">${job.title}</h3>
-                            <p class="text-sm text-gray-500 mt-1">${job.companies.join(' • ')}</p>
+                            <p class="text-sm text-gray-500 mt-1">${(job.companies || []).join(' • ')}</p>
                         </div>
                         <div class="text-right">
                             <p class="text-2xl font-bold text-indigo-600">${job.salary}</p>
@@ -363,15 +383,15 @@
                     <div class="mb-4">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-semibold text-gray-700">Match Confidence</span>
-                            <span class="font-bold text-lg text-indigo-600">${job.confidence}%</span>
+                            <span class="font-bold text-lg text-indigo-600">${confidence}%</span>
                         </div>
                         <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="confidence-bar ${confidenceClass} h-full" style="width: ${job.confidence}%"></div>
+                            <div class="confidence-bar ${confidenceClass} h-full" style="width: ${confidence}%"></div>
                         </div>
                     </div>
 
                     <!-- Job Description -->
-                    <p class="text-gray-600 mb-4">${job.jd}</p>
+                    <p class="text-gray-600 mb-4">${job.jd || 'No description available'}</p>
 
                     <!-- Matched Skills -->
                     <div class="mb-4">
@@ -380,11 +400,11 @@
                     </div>
 
                     <!-- Remaining Skills with Learning Resources -->
-                    ${job.remainingSkills.length > 0 ? `
+                    ${remainingSkills.length > 0 ? `
                         <div class="mb-4 bg-orange-50 p-4 rounded-lg border-l-4 border-orange-300">
                             <h4 class="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
                                 <i data-lucide="target" class="w-4 h-4 text-orange-600"></i>
-                                Skills to develop (+${Math.round((100 - job.confidence) / job.remainingSkills.length)}% each):
+                                Skills to develop (+${Math.round((100 - confidence) / remainingSkills.length)}% each):
                             </h4>
                             ${remainingSkillsTags}
                         </div>

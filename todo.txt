@@ -14,3 +14,9 @@ Your NextStep Career Hub now has 500+ institutions, 100+ competitive exams, 60+ 
 ✅ Automatic fallback system
 ✅ Production-ready architecture
 ✅ Complete setup automation
+
+5)User types anything: "I can code in Python, do data analysis, a bit of ML stuff"
+AI understands it: Extracts ["Python", "Data Analysis", "Machine Learning"]
+Shows extracted skills: "AI Extracted Skills: Python, Data Analysis, Machine Learning"
+Matches to jobs: Uses those skills to find best matches
+Results show: Confidence % for each job with matched/remaining skills
