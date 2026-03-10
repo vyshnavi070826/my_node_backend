@@ -16,7 +16,8 @@ const collectionItemSchema = new mongoose.Schema({
   },
   department: {
     type: String,
-    required: true
+    required: false,
+    default: 'all'
   },
   metadata: {
     type: mongoose.Schema.Types.Mixed,

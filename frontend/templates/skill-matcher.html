@@ -453,7 +453,11 @@
                         type: 'job',
                         elementId: title,
                         title: title,
-                        metadata: { bookmarkedAt: new Date().toISOString() }
+                        department: 'all',
+                        metadata: { 
+                            source: 'skill-matcher',
+                            bookmarkedAt: new Date().toISOString() 
+                        }
                     })
                 });
                 
