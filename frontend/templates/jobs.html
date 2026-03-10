@@ -82,8 +82,14 @@
 
         // Render Jobs
         jobsGrid.innerHTML = '';
-        if(deptData.jobRoles.length > 0) {
-            deptData.jobRoles.forEach((job, index) => {
+        let allJobs = [];
+        Object.keys(DATA).forEach(dept => {
+            if (DATA[dept].jobRoles) {
+                allJobs = allJobs.concat(DATA[dept].jobRoles.map(job => ({ ...job, department: dept })));
+            }
+        });
+        if(allJobs.length > 0) {
+            allJobs.forEach((job, index) => {
                 const companiesHTML = job.companies.map(c => `<span class="text-xs font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl">${c}</span>`).join('');
                 const jobDiv = document.createElement('div');
                 jobDiv.className = 'bg-white border p-12 rounded-[4rem] shadow-sm hover:shadow-xl transition-all opacity-0';
@@ -112,5 +118,6 @@
         }
 
         window.lucide.createIcons();
+    </script>
 </body>
 </html>

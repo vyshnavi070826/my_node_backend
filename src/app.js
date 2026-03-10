@@ -43,9 +43,9 @@ templateFiles.forEach(file => {
 });
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
+// mongoose.connect(process.env.MONGO_URI)
+// .then(() => console.log("MongoDB Connected"))
+// .catch(err => console.log(err));
 
 // Routes
 app.use("/api/departments", require("./routes/index"));
