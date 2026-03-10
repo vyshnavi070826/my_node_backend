@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Collections | NxtStepGo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-900 hero-gradient">
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 bg-white bg-opacity-95 backdrop-blur py-6 shadow-sm">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 group text-left brand-logo">
+                <div class="brand-icon-wrapper">
+                    <div class="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-200 brand-icon">
+                        <i data-lucide="graduation-cap"></i>
+                    </div>
+                </div>
+                <div class="flex flex-col leading-tight">
+                    <span class="brand-text">NxtStepGo</span>
+                    <span class="brand-subtitle">Collections</span>
+                </div>
+            </a>
+            <div class="flex items-center gap-3">
+                <a href="departments.html" class="text-slate-600 px-6 py-2.5 rounded-full text-sm font-bold hover:text-blue-600 transition-all">Explore</a>
+                <button id="logout-btn" class="text-red-600 px-6 py-2.5 rounded-full text-sm font-bold hover:bg-red-50 transition-all">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-32 px-6 animate-in min-h-screen pt-32">
+        <div class="mb-12">
+            <h1 class="text-5xl font-black text-slate-900 mb-4">My Collections</h1>
+            <p class="text-slate-500 font-medium">Organize and save your favorite items for future reference</p>
+        </div>
+
+        <!-- Create New Collection -->
+        <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-12 card-hover">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">Create New Collection</h2>
+            <form id="createCollectionForm" class="space-y-4">
+                <div>
+                    <input 
+                        type="text" 
+                        id="collectionName" 
+                        placeholder="Collection name" 
+                        class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        required
+                    />
+                </div>
+                <div>
+                    <textarea 
+                        id="collectionDesc" 
+                        placeholder="Description (optional)" 
+                        class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all h-20 resize-none"
+                    ></textarea>
+                </div>
+                <button 
+                    type="submit"
+                    class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                >
+                    <i data-lucide="plus" class="w-5 h-5 inline mr-2"></i>
+                    Create Collection
+                </button>
+            </form>
+        </div>
+
+        <!-- Collections Grid -->
+        <div id="collectionsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-20 bg-white rounded-3xl border border-slate-100">
+            <i data-lucide="inbox" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i>
+            <p class="text-slate-400 font-medium">No collections yet. Create one to get started!</p>
+        </div>
+    </main>
+
+    <!-- Modal for viewing/editing collection -->
+    <div id="collectionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-slate-100 p-6 flex items-center justify-between">
+                <h2 id="modalTitle" class="text-2xl font-bold text-slate-900"></h2>
+                <button id="closeModal" class="text-slate-400 hover:text-slate-900">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="p-6"></div>
+        </div>
+    </div>
+
+    <script src="../script/data.js"></script>
+    <script>
+        lucide.createIcons();
+
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = '/login.html';
+        }
+
+        let userPreferences = null;
+
+        // Load user collections
+        async function loadCollections() {
+            try {
+                const response = await fetch('/api/preferences', {
+                    headers: {
+                        'x-user-id': userId
+                    }
+                });
+                if (response.ok) {
+                    userPreferences = await response.json();
+                    renderCollections();
+                }
+            } catch (error) {
+                console.error('Error loading collections:', error);
+            }
+        }
+
+        // Render collections grid
+        function renderCollections() {
+            const grid = document.getElementById('collectionsGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            grid.innerHTML = '';
+
+            if (!userPreferences.personalCollections || userPreferences.personalCollections.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            userPreferences.personalCollections.forEach((collection, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-8 rounded-2xl border border-slate-100 cursor-pointer hover:shadow-xl transition-all card-hover opacity-0';
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.2 + index * 0.1}s forwards`;
+                
+                div.innerHTML = `
+                    <div class="flex items-start gap-4 mb-4">
+                        <div class="p-3 bg-blue-50 rounded-xl">
+                            <i data-lucide="bookmark" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <h3 class="text-xl font-bold text-slate-900">${collection.name}</h3>
+                            <p class="text-slate-500 text-sm">${collection.items.length} items</p>
+                        </div>
+                        <button class="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 transition rounded-lg delete-btn" data-name="${collection.name}">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    ${collection.description ? `<p class="text-slate-600 text-sm mb-4">${collection.description}</p>` : ''}
+                    <div class="flex flex-wrap gap-2">
+                        ${collection.items.slice(0, 3).map(item => `
+                            <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold">${item.type}</span>
+                        `).join('')}
+                        ${collection.items.length > 3 ? `<span class="text-slate-400 text-xs px-3 py-1">+${collection.items.length - 3} more</span>` : ''}
+                    </div>
+                `;
+
+                div.addEventListener('click', (e) => {
+                    if (!e.target.closest('.delete-btn')) {
+                        viewCollection(collection);
+                    }
+                });
+
+                div.querySelector('.delete-btn').addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete collection "${collection.name}"?`)) {
+                        await deleteCollection(collection.name);
+                    }
+                });
+
+                grid.appendChild(div);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Create new collection
+        document.getElementById('createCollectionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('collectionName').value;
+            const description = document.getElementById('collectionDesc').value;
+
+            try {
+                const response = await fetch('/api/preferences/collection/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({ name, description })
+                });
+
+                if (response.ok) {
+                    document.getElementById('createCollectionForm').reset();
+                    await loadCollections();
+                    alert('Collection created successfully!');
+                }
+            } catch (error) {
+                console.error('Error creating collection:', error);
+                alert('Failed to create collection');
+            }
+        });
+
+        // View collection details
+        function viewCollection(collection) {
+            const modal = document.getElementById('collectionModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+
+            modalTitle.textContent = collection.name;
+            modalContent.innerHTML = `
+                <p class="text-slate-600 mb-6">${collection.description || 'No description'}</p>
+                <div class="space-y-4">
+                    ${collection.items.length > 0 ? collection.items.map(item => `
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                            <div>
+                                <p class="font-semibold text-slate-900">${item.title}</p>
+                                <p class="text-xs text-slate-500">${item.type} • ${item.department}</p>
+                            </div>
+                            <button class="text-red-600 hover:bg-red-50 p-2 rounded-lg remove-item-btn" data-element-id="${item.elementId}">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    `).join('') : '<p class="text-slate-400 text-center py-8">No items in this collection yet</p>'}
+                </div>
+            `;
+
+            // Add event listeners for remove buttons
+            modalContent.querySelectorAll('.remove-item-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const elementId = e.currentTarget.dataset.elementId;
+                    await removeFromCollection(collection.name, elementId);
+                    viewCollection(collection); // Refresh modal
+                });
+            });
+
+            lucide.createIcons();
+            modal.classList.remove('hidden');
+        }
+
+        // Delete collection
+        async function deleteCollection(name) {
+            try {
+                const response = await fetch('/api/preferences/collection/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({ collectionName: name })
+                });
+
+                if (response.ok) {
+                    await loadCollections();
+                }
+            } catch (error) {
+                console.error('Error deleting collection:', error);
+            }
+        }
+
+        // Remove item from collection
+        async function removeFromCollection(collectionName, elementId) {
+            try {
+                await fetch('/api/preferences/collection/remove-item', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({ collectionName, elementId })
+                });
+                await loadCollections();
+            } catch (error) {
+                console.error('Error removing item:', error);
+            }
+        }
+
+        // Close modal
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('collectionModal').classList.add('hidden');
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userName');
+            window.location.href = '/templates/index.html';
+        });
+
+        // Load collections on page load
+        loadCollections();
+        initializePage();
+    </script>
+</body>
+</html>

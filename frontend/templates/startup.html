@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Startups & Ideas | Next Step</title>
+    <title>Startups & Entrepreneurship | Next Step</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="../style/styles.css">
@@ -14,16 +14,22 @@
             <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Back to hub
         </a>
 
+        <!-- Founder's Guide Section -->
         <section class="mb-32 opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;">
-            <h2 class="text-6xl font-black text-slate-900 mb-20 tracking-tighter border-l-8 border-blue-600 pl-12 text-balance text-gradient">Industrial Ecosystem.</h2>
-            <div id="ecosystem-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                </div>
+            <h2 class="text-6xl font-black text-slate-900 mb-20 tracking-tighter text-gradient border-l-8 border-blue-600 pl-12">Founder's Guide</h2>
+            <div id="guide-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8"></div>
         </section>
 
+        <!-- Industrial Ecosystem Section -->
+        <section class="mb-32 opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;">
+            <h2 class="text-6xl font-black text-slate-900 mb-20 tracking-tighter border-l-8 border-blue-600 pl-12 text-balance text-gradient">Industrial Ecosystem.</h2>
+            <div id="ecosystem-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
+        </section>
+
+        <!-- Idea Bank Section -->
         <section class="opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;">
             <h2 class="text-6xl font-black text-slate-900 mb-20 tracking-tighter border-l-8 border-purple-600 pl-12 text-balance text-gradient">Idea Bank.</h2>
-            <div id="ideas-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                </div>
+            <div id="ideas-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-12"></div>
         </section>
     </main>
 
@@ -32,8 +38,102 @@
         const urlParams = new URLSearchParams(window.location.search);
         const deptId = urlParams.get('dept') || 'biotech';
         const startupData = DATA[deptId].startups;
+        const userId = localStorage.getItem('userId');
 
         document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
+
+        // Helper function to add bookmark
+        async function addBookmark(elementId, type, title) {
+            if (!userId) {
+                alert('Please login to bookmark items');
+                return;
+            }
+            try {
+                const response = await fetch('/api/preferences/bookmark', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({
+                        type,
+                        elementId,
+                        title,
+                        department: deptId,
+                        metadata: { deptId }
+                    })
+                });
+                if (response.ok) {
+                    alert('Added to bookmarks!');
+                }
+            } catch (error) {
+                console.log('Error bookmarking:', error);
+            }
+        }
+
+        // Populate Founder's Guide
+        const guideGrid = document.getElementById('guide-grid');
+        const guideData = startupData.guide;
+        if (guideData && guideData.length > 0) {
+            guideData.forEach((step, i) => {
+                let stepsHTML = '';
+                if(step.steps) {
+                    stepsHTML = `
+                        <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="zap" class="w-3.5 h-3.5 text-blue-600 icon-bounce"></i>
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Process Steps</span>
+                            </div>
+                            <p class="text-xs font-bold text-slate-800 leading-relaxed">${step.steps}</p>
+                        </div>
+                    `;
+                }
+
+                let reqHTML = '';
+                if(step.req) {
+                    reqHTML = `
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Eligibility</span>
+                            </div>
+                            <p class="text-xs text-slate-600 font-medium leading-relaxed">${step.req}</p>
+                        </div>
+                    `;
+                }
+
+                const div = document.createElement('div');
+                div.className = "bg-white p-12 rounded-[3.5rem] border border-slate-100 relative group overflow-hidden flex flex-col h-full hover:shadow-2xl category-card opacity-0";
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.4 + i * 0.1}s forwards`;
+                div.innerHTML = `
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] flex items-center justify-center font-black text-4xl text-slate-100">0${i+1}</div>
+                    
+                    <div class="mb-8">
+                        <span class="inline-block bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-blue-100">
+                            ${step.tag}
+                        </span>
+                        <h3 class="text-3xl font-black mb-4 text-slate-900 leading-tight">${step.title}</h3>
+                        <p class="text-slate-500 font-medium leading-relaxed">${step.content}</p>
+                    </div>
+
+                    <div class="space-y-6 flex-grow">
+                        ${stepsHTML}
+                        ${reqHTML}
+                    </div>
+
+                    <div class="mt-12 pt-8 border-t border-slate-50 space-y-4">
+                        <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                            <span class="text-slate-400">Contact Point</span>
+                            <span class="text-blue-600">${step.contact}</span>
+                        </div>
+                        <a href="${step.url}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 btn-primary">
+                            Official Portal <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                `;
+                guideGrid.appendChild(div);
+            });
+        }
 
         // Populate Ecosystem
         const ecoGrid = document.getElementById('ecosystem-grid');
@@ -41,13 +141,18 @@
             startupData.ecosystem.forEach((company, index) => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-12 rounded-[3.5rem] border border-slate-100 flex flex-col hover:shadow-2xl category-card h-full opacity-0";
-                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.4 + index * 0.1}s forwards`;
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.5 + index * 0.1}s forwards`;
                 div.innerHTML = `
                     <div class="flex justify-between items-start mb-6">
                         <h3 class="text-3xl font-black text-slate-900">${company.name}</h3>
-                        <a href="${company.url}" target="_blank" class="p-3 bg-slate-50 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
-                            <i data-lucide="external-link" class="w-6 h-6"></i>
-                        </a>
+                        <div class="flex gap-2">
+                            <button class="p-3 bg-slate-50 rounded-full text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all bookmark-btn" data-id="${company.name}" data-type="startup" title="Add to bookmarks">
+                                <i data-lucide="bookmark" class="w-6 h-6"></i>
+                            </button>
+                            <a href="${company.url}" target="_blank" class="p-3 bg-slate-50 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                                <i data-lucide="external-link" class="w-6 h-6"></i>
+                            </a>
+                        </div>
                     </div>
                     <p class="text-slate-500 font-medium leading-relaxed mb-10 flex-grow">${company.desc}</p>
                     <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
@@ -56,6 +161,11 @@
                     </div>
                 `;
                 ecoGrid.appendChild(div);
+                
+                // Add bookmark listener
+                div.querySelector('.bookmark-btn').addEventListener('click', function() {
+                    addBookmark(company.name, 'startup', company.name);
+                });
             });
         }
 
@@ -64,13 +174,26 @@
         if (startupData.ideas && startupData.ideas.length > 0) {
             startupData.ideas.forEach((idea, index) => {
                 const div = document.createElement('div');
-                div.className = "flex items-start gap-8 p-10 bg-white border border-slate-100 rounded-[3rem] text-slate-900 font-black text-xl hover:shadow-xl category-card opacity-0";
-                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.5 + index * 0.1}s forwards`;
+                div.className = "flex items-start gap-8 p-10 bg-white border border-slate-100 rounded-[3rem] text-slate-900 font-black text-xl hover:shadow-xl category-card opacity-0 group cursor-pointer";
+                div.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.6 + index * 0.1}s forwards`;
+                const ideaId = `idea-${index}`;
                 div.innerHTML = `
-                    <i data-lucide="lightbulb" class="w-8 h-8 mt-1 shrink-0 text-purple-400 icon-bounce"></i>
-                    <span>${idea}</span>
+                    <div class="flex items-start justify-between w-full">
+                        <div class="flex items-start gap-8 flex-grow">
+                            <i data-lucide="lightbulb" class="w-8 h-8 mt-1 shrink-0 text-purple-400 icon-bounce"></i>
+                            <span>${idea}</span>
+                        </div>
+                        <button class="p-3 bg-slate-50 rounded-full text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-all bookmark-btn ml-4 shrink-0" data-id="${ideaId}" data-type="startup">
+                            <i data-lucide="bookmark" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 `;
                 ideasGrid.appendChild(div);
+                
+                // Add bookmark listener
+                div.querySelector('.bookmark-btn').addEventListener('click', function() {
+                    addBookmark(ideaId, 'startup', `Idea: ${idea.substring(0, 50)}...`);
+                });
             });
         }
 

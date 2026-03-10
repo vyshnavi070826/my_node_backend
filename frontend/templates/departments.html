@@ -1,161 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Select Department | Next Step</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-
-<link rel="stylesheet" href="../style/styles.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Department | Next Step</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../style/styles.css">
 </head>
-
 <body class="bg-slate-50 text-slate-900 hero-gradient">
-
-<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 bg-transparent py-6">
-
-<div class="max-w-7xl mx-auto flex items-center justify-between">
-
-<a href="index.html" class="flex items-center gap-3 group text-left brand-logo">
-
-<div class="brand-icon-wrapper">
-
-<div class="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-200 brand-icon">
-
-<i data-lucide="graduation-cap"></i>
-
-</div>
-
-</div>
-
-<div class="flex flex-col leading-tight">
-<span class="brand-text">NxtStepGo</span>
-</div>
-
-</a>
-
-<a href="index.html" class="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 transition-all hover:bg-slate-800 shadow-md">
-
-<i data-lucide="home" class="w-4 h-4"></i> Home
-
-</a>
-
-</div>
-
-</nav>
-
-
-<main class="max-w-6xl mx-auto py-32 px-6 animate-in min-h-screen">
-
-<div class="text-center mb-20">
-
-<h2 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">
-
-Select Your Department
-
-</h2>
-
-<p class="text-slate-500 font-medium max-w-xl mx-auto leading-relaxed">
-
-Choose your specialization to unlock career intelligence.
-
-</p>
-
-</div>
-
-
-<div id="dept-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-</div>
-
-</main>
-
-
-<script>
-
-async function loadDepartments() {
-
-const grid = document.getElementById("dept-grid");
-
-try {
-
-const response = await fetch("https://my-node-backend-6zba.onrender.com/api/departments");
-
-const departments = await response.json();
-
-if (departments.length === 0) {
-
-grid.innerHTML = `
-<p class="text-center text-gray-500 col-span-3">
-No departments found
-</p>
-`;
-
-return;
-}
-
-departments.forEach((dept, index) => {
-
-const a = document.createElement("a");
-
-a.href = `hub.html?dept=${dept._id}`;
-
-a.className = `
-group p-10 bg-white border border-slate-100 rounded-[3rem]
-shadow-sm hover:shadow-2xl hover:border-blue-500
-category-card text-left flex flex-col items-start
-relative overflow-hidden block
-`;
-
-a.innerHTML = `
-
-<div class="text-6xl mb-8 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 text-blue-600">
-
-<i data-lucide="graduation-cap" style="width:64px;height:64px;"></i>
-
-</div>
-
-<h3 class="text-2xl font-black text-slate-900 mb-2">
-
-${dept.name}
-
-</h3>
-
-<div class="flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest mt-auto">
-
-View Hub
-
-<i data-lucide="chevron-right" class="w-4 h-4"></i>
-
-</div>
-
-`;
-
-grid.appendChild(a);
-
-});
-
-lucide.createIcons();
-
-} catch (error) {
-
-grid.innerHTML = `
-<p class="text-red-500 text-center col-span-3">
-Failed to load departments
-</p>
-`;
-
-console.error(error);
-
-}
-
-}
-
-loadDepartments();
-
-</script>
-
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 bg-transparent py-6">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 group text-left brand-logo">
+                <div class="brand-icon-wrapper">
+                    <div class="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-200 brand-icon">
+                        <i data-lucide="graduation-cap"></i>
+                    </div>
+                </div>
+                <div class="flex flex-col leading-tight">
+                    <span class="brand-text">NxtStepGo</span>
+                </div>
+            </a>
+            <a href="index.html" class="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 transition-all hover:bg-slate-800 shadow-md">
+                <i data-lucide="home" class="w-4 h-4"></i> Home
+            </a>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto py-32 px-6 animate-in min-h-screen">
+        <div class="text-center mb-20">
+            <h2 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">Select Your Department</h2>
+            <p class="text-slate-500 font-medium max-w-xl mx-auto leading-relaxed">Choose your specialization to unlock career intelligence.</p>
+        </div>
+        <div id="dept-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+    </main>
+
+    <script src="../script/data.js"></script>
+    <script>
+        const grid = document.getElementById('dept-grid');
+        const userId = localStorage.getItem('userId');
+
+        DEPARTMENTS.forEach((dept, index) => {
+            // Note the ?dept= parameter passing the ID to the hub
+            const a = document.createElement('a');
+            a.href = `hub.html?dept=${dept.id}`;
+            a.className = `group p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm hover:shadow-2xl hover:border-blue-500 category-card text-left flex flex-col items-start relative overflow-hidden block opacity-0`;
+            a.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s forwards`;
+            a.innerHTML = `
+                <div class="text-6xl mb-8 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 text-blue-600">
+                    <i data-lucide="${dept.icon}" style="width: 64px; height: 64px;"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900 mb-2">${dept.name}</h3>
+                <div class="flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest mt-auto group-hover:gap-4 transition-all duration-300">
+                    View Hub <i data-lucide="chevron-right" class="w-4 h-4 group-hover:translate-x-2 transition-transform"></i>
+                </div>
+            `;
+            
+            // Track department visit if user is logged in
+            a.addEventListener('click', async (e) => {
+                if (userId) {
+                    try {
+                        await fetch('/api/preferences/track-department', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-user-id': userId
+                            },
+                            body: JSON.stringify({ department: dept.id })
+                        });
+                    } catch (error) {
+                        console.log('Error tracking department:', error);
+                    }
+                }
+            });
+            
+            grid.appendChild(a);
+        });
+        initializePage();
+    </script>
 </body>
 </html>
