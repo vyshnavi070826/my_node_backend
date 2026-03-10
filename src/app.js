@@ -30,6 +30,7 @@ const templateFiles = [
   'startup.html',
   'startup-guide.html',
   'skill-matcher.html',
+  'bookmarks.html',
   'NxstepGo.html',
   'login.html',
   'signup.html'
