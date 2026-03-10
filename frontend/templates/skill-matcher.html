@@ -434,8 +434,40 @@
             `;
         }
 
-        function bookmarkJob(title) {
-            alert(`Job "${title}" bookmarked! (Feature coming soon)`);
+        async function bookmarkJob(title) {
+            const userId = localStorage.getItem('userId');
+            
+            if (!userId) {
+                alert('Please login to bookmark jobs');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/preferences/bookmark', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': userId
+                    },
+                    body: JSON.stringify({
+                        type: 'job',
+                        elementId: title,
+                        title: title,
+                        metadata: { bookmarkedAt: new Date().toISOString() }
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`✅ "${title}" added to bookmarks!`);
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.message}`);
+                }
+            } catch (error) {
+                console.error('Error bookmarking:', error);
+                alert('Error bookmarking job. Please try again.');
+            }
         }
 
         function goBack() {

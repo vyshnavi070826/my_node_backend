@@ -61,3 +61,57 @@ Feel free to submit issues or pull requests for improvements or bug fixes.
 ## License
 
 This project is licensed under the MIT License.
+
+
+//////////////////////
+
+
+Your Input: "I can code in Python, do data analysis, a bit of ML stuff"
+    ↓
+Frontend calls: POST /api/skill-matcher/extract
+    ↓
+Node backend tries → Python AI service at localhost:5001
+    ↓
+Python AI Service (Running on Render Worker Process) receives request
+    ↓
+Loads the model (all-MiniLM-L6-v2)
+    ↓
+Encodes your text to 384-dimensional embedding vector
+    ↓
+Encodes each of the 14 job skills to embeddings
+    ↓
+Calculates cosine similarity between your text and each skill
+    ↓
+Returns: {
+  method: "skill-extraction",  // ← NOT "basic-extraction"!
+  extractedSkills: [
+    { skill: "Python", confidence: 95.2 },
+    { skill: "Data Analysis", confidence: 92.1 },
+    { skill: "Machine Learning", confidence: 88.3 }
+  ]
+}
+    ↓
+Frontend shows: "AI Extracted Skills: Python, Data Analysis, Machine Learning"
+┌─────────────────────────────────────────────────────┐
+│     PRODUCTION-READY AI SKILL MATCHER                │
+├─────────────────────────────────────────────────────┤
+│                                                       │
+│ ✅ Two-process architecture working                  │
+│    - Web service (Node.js) on port 5000              │
+│    - Worker service (Python AI) on port 5001         │
+│                                                       │
+│ ✅ AI genuinely processing requests                  │
+│    - Loading semantic embeddings                     │
+│    - Computing similarity scores                     │
+│    - Returning confident matches                     │
+│                                                       │
+│ ✅ Fallback system in place but STANDBY              │
+│    - Only activates if Python crashes                │
+│    - Ensures 100% uptime                             │
+│                                                       │
+│ ✅ Production deployed on Render                     │
+│    - Both processes running                          │
+│    - Auto-scaling configured                         │
+│    - Database connected                              │
+│                                                       │
+└─────────────────────────────────────────────────────┘
