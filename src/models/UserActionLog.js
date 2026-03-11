@@ -44,6 +44,12 @@ const userActionLogSchema = new mongoose.Schema({
     departmentName: String
   },
   
+  // Human-readable summary for quick viewing in MongoDB
+  summary: {
+    type: String,
+    // Example: "User bookmarked 'Software Engineer' (Job) in Biotech Department"
+  },
+  
   // Detailed action metadata
   metadata: {
     // For bookmarks

@@ -29,6 +29,9 @@ async function logUserAction(userId, actionType, options = {}) {
       ipAddress = null
     } = options;
 
+    // Generate human-readable summary
+    const summary = generateSummary(actionType, resourceType, resourceName, departmentName);
+
     // Create action log entry
     const actionLog = new UserActionLog({
       userId,
@@ -48,6 +51,7 @@ async function logUserAction(userId, actionType, options = {}) {
       status,
       error,
       sessionId,
+      summary,
       timestamp: new Date()
     });
 
@@ -56,7 +60,7 @@ async function logUserAction(userId, actionType, options = {}) {
     // Update user's activity stats
     await updateUserActivityStats(userId, actionType);
 
-    console.log(`✓ Action logged: ${actionType} for user ${userId}`);
+    console.log(`✓ Action logged: ${actionType} for user ${userId} - ${summary}`);
     return actionLog;
   } catch (error) {
     console.error('Error logging user action:', error);
@@ -194,6 +198,47 @@ async function getDepartmentAnalytics(departmentId) {
   } catch (error) {
     console.error('Error fetching department analytics:', error);
     return [];
+  }
+}
+
+/**
+ * Generate human-readable summary of action
+ */
+function generateSummary(actionType, resourceType, resourceName, departmentName) {
+  const deptSuffix = departmentName ? ` in ${departmentName}` : '';
+  const resourceTypeLabel = resourceType ? `(${resourceType})` : '';
+  
+  switch(actionType) {
+    case 'LOGIN':
+      return `User logged in`;
+    case 'LOGOUT':
+      return `User logged out`;
+    case 'SIGNUP':
+      return `New user signed up`;
+    case 'BOOKMARK_ADD':
+      return `User bookmarked: '${resourceName}' ${resourceTypeLabel}${deptSuffix}`;
+    case 'BOOKMARK_REMOVE':
+      return `User removed bookmark: '${resourceName}' ${resourceTypeLabel}${deptSuffix}`;
+    case 'SKILL_SEARCH':
+      return `User searched for: '${resourceName}'`;
+    case 'DEPARTMENT_VIEW':
+      return `User viewed ${resourceName} department`;
+    case 'JOB_VIEW':
+      return `User viewed job: '${resourceName}'${deptSuffix}`;
+    case 'PROGRAM_VIEW':
+      return `User viewed program: '${resourceName}'${deptSuffix}`;
+    case 'EXAM_VIEW':
+      return `User viewed exam: '${resourceName}'${deptSuffix}`;
+    case 'STARTUP_VIEW':
+      return `User viewed startup: '${resourceName}'${deptSuffix}`;
+    case 'COLLECTION_CREATE':
+      return `User created collection: '${resourceName}'`;
+    case 'COLLECTION_UPDATE':
+      return `User updated collection: '${resourceName}'`;
+    case 'COLLECTION_DELETE':
+      return `User deleted collection: '${resourceName}'`;
+    default:
+      return `User action: ${actionType}`;
   }
 }
 
