@@ -42,10 +42,23 @@ templateFiles.forEach(file => {
   });
 });
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
+// MongoDB connection with proper configuration
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+  retryWrites: true,
+  w: 'majority',
+  maxPoolSize: 10,
+  minPoolSize: 2
+})
+.then(() => {
+  console.log("✓ MongoDB Connected Successfully");
+})
+.catch(err => {
+  console.error("✗ MongoDB Connection Error:", err.message);
+  console.error("Connection String:", process.env.MONGO_URI ? "Set" : "NOT SET");
+});
 
 // Routes
 app.use("/api/departments", require("./routes/index"));
