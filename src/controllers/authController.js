@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const UserPreference = require("../models/UserPreference");
+const { logUserAction } = require("../utils/actionLogger");
 
 exports.signup = async (req, res) => {
   try {
@@ -29,7 +30,13 @@ exports.signup = async (req, res) => {
     const newUser = new User({
       name,
       email,
-      password
+      password,
+      profile: {
+        currentDepartment: 'all'
+      },
+      activityStats: {
+        accountCreatedAt: new Date()
+      }
     });
 
     await newUser.save();
@@ -39,6 +46,18 @@ exports.signup = async (req, res) => {
       userId: newUser._id
     });
     await userPref.save();
+
+    // Log signup action
+    await logUserAction(newUser._id, 'SIGNUP', {
+      resourceType: 'user',
+      resourceId: newUser._id,
+      metadata: {
+        email: newUser.email,
+        name: newUser.name
+      },
+      userAgent: req.headers['user-agent'] || null,
+      ipAddress: req.ip || req.connection.remoteAddress || null
+    });
 
     res.status(201).json({
       message: "Signup successful",
@@ -79,6 +98,18 @@ exports.login = async (req, res) => {
       userPref = new UserPreference({ userId: user._id });
       await userPref.save();
     }
+
+    // Log login action
+    await logUserAction(user._id, 'LOGIN', {
+      resourceType: 'user',
+      resourceId: user._id,
+      metadata: {
+        email: user.email,
+        name: user.name
+      },
+      userAgent: req.headers['user-agent'] || null,
+      ipAddress: req.ip || req.connection.remoteAddress || null
+    });
 
     res.json({
       message: "Login successful",

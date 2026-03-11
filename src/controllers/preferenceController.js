@@ -1,5 +1,6 @@
 const UserPreference = require("../models/UserPreference");
 const User = require("../models/User");
+const { logUserAction } = require("../utils/actionLogger");
 
 // Initialize user preferences when they first login
 exports.initializePreferences = async (req, res) => {
@@ -40,6 +41,15 @@ exports.trackDepartment = async (req, res) => {
     if (!pref.exploredDepartments.includes(department)) {
       pref.exploredDepartments.push(department);
       await pref.save();
+
+      // Log department view action
+      await logUserAction(userId, 'DEPARTMENT_VIEW', {
+        resourceType: 'department',
+        resourceId: department,
+        resourceName: department,
+        userAgent: req.headers['user-agent'] || null,
+        ipAddress: req.ip || req.connection.remoteAddress || null
+      });
     }
 
     res.json({ message: "Department tracked", preferences: pref });
@@ -70,6 +80,20 @@ exports.addBookmark = async (req, res) => {
     if (!pref[bookmarkField].some(item => item.elementId === elementId)) {
       pref[bookmarkField].push(item);
       await pref.save();
+
+      // Log bookmark action
+      await logUserAction(userId, 'BOOKMARK_ADD', {
+        resourceType: type,
+        resourceId: elementId,
+        resourceName: title,
+        departmentId: department,
+        metadata: {
+          bookmarkField,
+          ...metadata
+        },
+        userAgent: req.headers['user-agent'] || null,
+        ipAddress: req.ip || req.connection.remoteAddress || null
+      });
     }
 
     res.json({ message: `${type} bookmarked`, preferences: pref });
@@ -82,7 +106,7 @@ exports.addBookmark = async (req, res) => {
 exports.removeBookmark = async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
-    const { type, elementId } = req.body;
+    const { type, elementId, title, department } = req.body;
 
     const pref = await UserPreference.findOne({ userId });
     if (!pref) {
@@ -92,6 +116,19 @@ exports.removeBookmark = async (req, res) => {
     const bookmarkField = `bookmarked${type.charAt(0).toUpperCase() + type.slice(1)}s`;
     pref[bookmarkField] = pref[bookmarkField].filter(item => item.elementId !== elementId);
     await pref.save();
+
+    // Log bookmark removal action
+    await logUserAction(userId, 'BOOKMARK_REMOVE', {
+      resourceType: type,
+      resourceId: elementId,
+      resourceName: title,
+      departmentId: department,
+      metadata: {
+        bookmarkField
+      },
+      userAgent: req.headers['user-agent'] || null,
+      ipAddress: req.ip || req.connection.remoteAddress || null
+    });
 
     res.json({ message: `${type} removed from bookmarks`, preferences: pref });
   } catch (error) {
@@ -121,6 +158,19 @@ exports.createCollection = async (req, res) => {
     });
 
     await pref.save();
+
+    // Log collection creation
+    await logUserAction(userId, 'COLLECTION_CREATE', {
+      resourceType: 'collection',
+      resourceId: name,
+      resourceName: name,
+      metadata: {
+        description
+      },
+      userAgent: req.headers['user-agent'] || null,
+      ipAddress: req.ip || req.connection.remoteAddress || null
+    });
+
     res.status(201).json({ message: "Collection created", preferences: pref });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -213,6 +263,15 @@ exports.deleteCollection = async (req, res) => {
 
     pref.personalCollections = pref.personalCollections.filter(c => c.name !== collectionName);
     await pref.save();
+
+    // Log collection deletion
+    await logUserAction(userId, 'COLLECTION_DELETE', {
+      resourceType: 'collection',
+      resourceId: collectionName,
+      resourceName: collectionName,
+      userAgent: req.headers['user-agent'] || null,
+      ipAddress: req.ip || req.connection.remoteAddress || null
+    });
 
     res.json({ message: "Collection deleted", preferences: pref });
   } catch (error) {

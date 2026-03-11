@@ -65,5 +65,6 @@ app.use("/api/departments", require("./routes/index"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/preferences", require("./routes/preferenceRoutes"));
 app.use("/api/skill-matcher", require("./routes/skillMatcherRoutes"));
+app.use("/api/analytics", require("./routes/analyticsRoutes"));
 
 module.exports = app;

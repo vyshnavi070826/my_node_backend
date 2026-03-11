@@ -1,4 +1,8 @@
 const mongoose = require('mongoose');
+const User = require('./User');
+const UserPreference = require('./UserPreference');
+const UserActionLog = require('./UserActionLog');
+const Department = require('./department');
 
 const connectDB = async () => {
     try {
@@ -15,4 +19,8 @@ const connectDB = async () => {
 
 module.exports = {
     connectDB,
+    User,
+    UserPreference,
+    UserActionLog,
+    Department
 };
