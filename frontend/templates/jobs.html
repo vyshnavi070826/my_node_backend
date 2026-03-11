@@ -100,18 +100,31 @@
         let allJobs = [];
         Object.keys(DATA).forEach(dept => {
             if (DATA[dept].jobRoles) {
-                allJobs = allJobs.concat(DATA[dept].jobRoles.map(job => ({ ...job, department: dept })));
+                // Handle both old array format and new research/industry object format
+                if (Array.isArray(DATA[dept].jobRoles)) {
+                    allJobs = allJobs.concat(DATA[dept].jobRoles.map(job => ({ ...job, department: dept })));
+                } else if (DATA[dept].jobRoles.research || DATA[dept].jobRoles.industry) {
+                    // New format: research and industry bifurcation
+                    const researchJobs = DATA[dept].jobRoles.research || [];
+                    const industryJobs = DATA[dept].jobRoles.industry || [];
+                    allJobs = allJobs.concat(researchJobs.map(job => ({ ...job, department: dept, category: 'Research' })));
+                    allJobs = allJobs.concat(industryJobs.map(job => ({ ...job, department: dept, category: 'Industry' })));
+                }
             }
         });
         if(allJobs.length > 0) {
             allJobs.forEach((job, index) => {
                 const companiesHTML = job.companies.map(c => `<span class="text-xs font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl">${c}</span>`).join('');
+                const categoryBadge = job.category ? `<span class="text-xs font-bold ${job.category === 'Research' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} px-3 py-1 rounded-full">${job.category}</span>` : '';
                 const jobDiv = document.createElement('div');
                 jobDiv.className = 'bg-white border p-12 rounded-[4rem] shadow-sm hover:shadow-xl transition-all opacity-0';
                 jobDiv.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.3 + index * 0.1}s forwards`;
                 jobDiv.innerHTML = `
                     <div class="flex items-start justify-between mb-4">
-                        <h3 class="text-4xl font-black text-slate-900">${job.title}</h3>
+                        <div>
+                            <h3 class="text-4xl font-black text-slate-900 mb-2">${job.title}</h3>
+                            ${categoryBadge ? `<div>${categoryBadge}</div>` : ''}
+                        </div>
                         <button class="p-3 hover:bg-purple-50 text-slate-400 hover:text-purple-600 transition rounded-lg bookmark-btn" data-title="${job.title}">
                             <i data-lucide="bookmark" class="w-6 h-6"></i>
                         </button>
