@@ -19,7 +19,7 @@
             </a>
         </div>
 
-        <div id="view-skills" class="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-100 block card-hover opacity-0" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;">
+        <div id="view-skills" class="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-100 block card-hover opacity-0 hidden" style="animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;">
             <div class="bg-slate-900 p-16 text-white relative">
                 <div class="absolute top-0 right-0 w-80 h-80 bg-blue-600/20 rounded-full blur-[100px]"></div>
                 <h2 class="text-5xl font-black mb-6 tracking-tighter leading-tight text-gradient">Skill Check</h2>
@@ -33,10 +33,7 @@
             </div>
         </div>
 
-        <div id="view-results" class="hidden">
-            <button id="reset-skills" class="mb-6 flex items-center text-slate-400 font-black hover:text-blue-600 transition-colors uppercase tracking-[0.3em] text-[10px] group">
-                <i data-lucide="arrow-left" class="w-4 h-4 mr-2 group-hover:-translate-x-2 transition-transform"></i> Re-select Skills
-            </button>
+        <div id="view-results" class="">
             <h2 class="text-6xl font-black text-slate-900 tracking-tighter mb-12 text-gradient">Industry Placement</h2>
             <div id="jobs-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-12"></div>
         </div>
@@ -51,10 +48,6 @@
         
         document.getElementById('back-btn').href = `hub.html?dept=${deptId}`;
         
-        let userSkills = [];
-        const skillsGrid = document.getElementById('skills-grid');
-        const analyzeBtn = document.getElementById('analyze-btn');
-        const viewSkills = document.getElementById('view-skills');
         const viewResults = document.getElementById('view-results');
         const jobsGrid = document.getElementById('jobs-grid');
 
@@ -87,83 +80,44 @@
             }
         }
 
-        // Render Skill Buttons
-        function renderSkills() {
-            skillsGrid.innerHTML = '';
-            deptData.skillInventory.forEach(skill => {
-                const isSelected = userSkills.includes(skill);
-                const btn = document.createElement('button');
-                btn.className = `flex items-center justify-between p-7 rounded-[2rem] border-2 transition-all ${isSelected ? 'border-blue-600 bg-blue-50 text-blue-900 shadow-xl scale-[1.02]' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300'}`;
-                btn.innerHTML = `
-                    <span class="font-black text-xs uppercase tracking-widest">${skill}</span>
-                    <i data-lucide="${isSelected ? 'check-circle-2' : 'plus-circle'}" class="w-6 h-6 ${isSelected ? 'text-blue-600' : 'text-slate-200'}"></i>
+        // Render Jobs
+        jobsGrid.innerHTML = '';
+        let allJobs = [];
+        Object.keys(DATA).forEach(dept => {
+            if (DATA[dept].jobRoles) {
+                allJobs = allJobs.concat(DATA[dept].jobRoles.map(job => ({ ...job, department: dept })));
+            }
+        });
+        if(allJobs.length > 0) {
+            allJobs.forEach((job, index) => {
+                const companiesHTML = job.companies.map(c => `<span class="text-xs font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl">${c}</span>`).join('');
+                const jobDiv = document.createElement('div');
+                jobDiv.className = 'bg-white border p-12 rounded-[4rem] shadow-sm hover:shadow-xl transition-all opacity-0';
+                jobDiv.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.3 + index * 0.1}s forwards`;
+                jobDiv.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <h3 class="text-4xl font-black text-slate-900">${job.title}</h3>
+                        <button class="p-3 hover:bg-purple-50 text-slate-400 hover:text-purple-600 transition rounded-lg bookmark-btn" data-title="${job.title}">
+                            <i data-lucide="bookmark" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                    <p class="text-green-600 font-black text-xs uppercase tracking-widest mb-8">${job.salary}</p>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-8">${job.jd}</p>
+                    <div class="flex flex-wrap gap-4">${companiesHTML}</div>
                 `;
-                btn.onclick = () => {
-                    if(isSelected) userSkills = userSkills.filter(s => s !== skill);
-                    else userSkills.push(skill);
-                    
-                    if(userSkills.length > 0) {
-                        analyzeBtn.disabled = false;
-                        analyzeBtn.className = "w-full py-8 rounded-[2.5rem] font-black text-xl uppercase tracking-widest shadow-2xl transition-all bg-blue-600 text-white hover:bg-blue-700";
-                    } else {
-                        analyzeBtn.disabled = true;
-                        analyzeBtn.className = "w-full py-8 rounded-[2.5rem] font-black text-xl uppercase tracking-widest shadow-2xl transition-all bg-slate-50 text-slate-300 cursor-not-allowed";
-                    }
-                    renderSkills();
-                };
-                skillsGrid.appendChild(btn);
+                jobsGrid.appendChild(jobDiv);
+                
+                jobDiv.querySelector('.bookmark-btn').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    bookmarkJob(job.title);
+                });
             });
             window.lucide.createIcons();
+        } else {
+            jobsGrid.innerHTML = `<p class="text-slate-400 italic py-20 text-center col-span-full">Roles currently being updated for this branch.</p>`;
         }
 
-        // Handle Analyze Click
-        analyzeBtn.onclick = () => {
-            viewSkills.classList.add('hidden');
-            viewResults.classList.remove('hidden');
-            
-            jobsGrid.innerHTML = '';
-            if(deptData.jobRoles.length > 0) {
-                deptData.jobRoles.forEach((job, index) => {
-                    const companiesHTML = job.companies.map(c => `<span class="text-xs font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl">${c}</span>`).join('');
-                    const jobDiv = document.createElement('div');
-                    jobDiv.className = 'bg-white border p-12 rounded-[4rem] shadow-sm hover:shadow-xl transition-all opacity-0';
-                    jobDiv.style.animation = `fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${0.3 + index * 0.1}s forwards`;
-                    jobDiv.innerHTML = `
-                        <div class="flex items-start justify-between mb-4">
-                            <h3 class="text-4xl font-black text-slate-900">${job.title}</h3>
-                            <button class="p-3 hover:bg-purple-50 text-slate-400 hover:text-purple-600 transition rounded-lg bookmark-btn" data-title="${job.title}">
-                                <i data-lucide="bookmark" class="w-6 h-6"></i>
-                            </button>
-                        </div>
-                        <p class="text-green-600 font-black text-xs uppercase tracking-widest mb-8">${job.salary}</p>
-                        <p class="text-slate-600 text-sm leading-relaxed mb-8">${job.jd}</p>
-                        <div class="flex flex-wrap gap-4">${companiesHTML}</div>
-                    `;
-                    jobsGrid.appendChild(jobDiv);
-                    
-                    jobDiv.querySelector('.bookmark-btn').addEventListener('click', function(e) {
-                        e.preventDefault();
-                        bookmarkJob(job.title);
-                    });
-                });
-                window.lucide.createIcons();
-            } else {
-                jobsGrid.innerHTML = `<p class="text-slate-400 italic py-20 text-center col-span-full">Roles currently being updated for this branch.</p>`;
-            }
-        };
-
-        // Reset
-        document.getElementById('reset-skills').onclick = () => {
-            userSkills = [];
-            renderSkills();
-            analyzeBtn.disabled = true;
-            analyzeBtn.className = "w-full py-8 rounded-[2.5rem] font-black text-xl uppercase tracking-widest shadow-2xl transition-all bg-slate-50 text-slate-300 cursor-not-allowed";
-            viewSkills.classList.remove('hidden');
-            viewResults.classList.add('hidden');
-        };
-
-        renderSkills();
-        initializePage();
+        window.lucide.createIcons();
     </script>
 </body>
 </html>
